@@ -158,7 +158,7 @@ const Login = () => {
                 onClick={handleLinkedInLogin}
                 disabled={isSubmitting}
               >
-                <LinkedIn className="w-5 h-5 mr-2 text-linkedin-primary" />
+                <Linkedin className="w-5 h-5 mr-2 text-linkedin-primary" />
                 Sign in with LinkedIn
               </Button>
             </div>
