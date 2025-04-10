@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,11 +42,20 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   const { toast } = useToast();
   const { canUseCustomApiKey, canCreateMorePosts, setPostsCreated, userPlan } = usePlan();
 
-  // Load API key from localStorage on component mount
   React.useEffect(() => {
     const storedApiKey = localStorage.getItem("openAIApiKey");
     if (storedApiKey) {
       setApiKey(storedApiKey);
+    }
+    
+    const savedTone = localStorage.getItem("defaultTone");
+    if (savedTone) {
+      setTone(savedTone);
+    }
+    
+    const savedModel = localStorage.getItem("defaultModel");
+    if (savedModel) {
+      setModel(savedModel);
     }
   }, []);
 
@@ -63,10 +71,8 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   };
 
   const generateCalendarContent = async (topic: string) => {
-    // Generate 30 unique posts for a content calendar
     const posts = [];
     
-    // Template structures for variety
     const templates = [
       `# ${generateTitle(topic)}\n\nLooking to improve your ${topic} skills? Here's what most people get wrong...\n\nThe secret isn't working harder, it's about working smarter.\n\nI've helped over 100 professionals master ${topic} using these simple techniques:\n\n- Start with the end goal in mind\n- Break down complex problems into manageable steps\n- Measure progress consistently\n\nWant to learn more? Check out my free guide in the comments! 💡\n\n#${topic.replace(/\s+/g, '')} #CareerGrowth #ProfessionalTips`,
       
@@ -79,11 +85,9 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       `# ${generateTitle(topic)}\n\nThe ${topic} framework that transformed my career:\n\n1. Identify your unique value proposition\n2. Build a consistent content strategy\n3. Engage authentically with your network\n4. Measure results and adjust accordingly\n5. Repeat daily for 90 days\n\nThis simple process helped me land 3 dream clients and grow my ${topic} skills exponentially.\n\nWhich step do you struggle with most? Comment below!\n\n#${topic.replace(/\s+/g, '')} #CareerStrategy #LinkedInTips`
     ];
     
-    // Generate 30 days of content using the templates
     for (let i = 0; i < 30; i++) {
       const templateIndex = i % templates.length;
       
-      // Add small variations to make each post unique
       const variations = [
         `Recently`, `This month`, `Last week`, `Just yesterday`,
         `For the past year`, `Throughout my career`,
@@ -93,11 +97,9 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       
       let content = templates[templateIndex];
       
-      // Add a unique modifier based on day number
       const dayModifier = variations[i % variations.length];
       content = content.replace(`Here's what`, `${dayModifier}, here's what`);
       
-      // Add unique title by adding day number
       const title = generateTitle(`${topic} - Part ${i+1}`);
       
       posts.push({
@@ -133,36 +135,27 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
     setGeneratedCalendar([]);
 
     try {
-      // In a real implementation, this would call the OpenAI API
-      // Using stored API key from localStorage if available
       const storedApiKey = localStorage.getItem("openAIApiKey") || apiKey;
       
       if (contentType === "single") {
-        // Simulate API call to OpenAI
         await new Promise(resolve => setTimeout(resolve, 2500));
         
-        // Placeholder content - in a real implementation this would use the OpenAI API
         const content = `# ${generateTitle(topic)}\n\nDid you know that LinkedIn posts with personal stories get 3x more engagement than purely promotional content?\n\nHere's what I've learned about ${topic} after 5 years in the industry:\n\n1️⃣ The fundamentals never change - focus on providing value first\n2️⃣ Building relationships matters more than vanity metrics\n3️⃣ Consistency beats perfection every single time\n\nWhat's been your experience with ${topic}? Share in the comments below! 👇\n\n#ProfessionalDevelopment #${topic.replace(/\s+/g, '')} #LinkedInTips`;
         
         setGeneratedContent(content);
         
-        // Increment posts created count
         if (userPlan) {
           setPostsCreated(userPlan.postsCreated + 1);
         }
       } else {
-        // Generate content calendar
         await new Promise(resolve => setTimeout(resolve, 3500));
         
-        // Generate 30 unique posts for the calendar
         const calendarPosts = await generateCalendarContent(topic);
         setGeneratedCalendar(calendarPosts);
         
-        // Join all posts together for compatibility with existing code
         const allPostsContent = calendarPosts.map(post => post.content).join('\n\n\n');
         setGeneratedContent(allPostsContent);
         
-        // Increment posts created count (counts as one creation even though it's multiple posts)
         if (userPlan) {
           setPostsCreated(userPlan.postsCreated + 1);
         }
@@ -196,7 +189,6 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   };
 
   const handleGenerateImage = async () => {
-    // Validate API key first
     const storedApiKey = localStorage.getItem("openAIApiKey") || apiKey;
     
     if (!storedApiKey) {
@@ -213,17 +205,15 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
     setImageApiKeyMissing(false);
     
     try {
-      // Simulate image generation API call to OpenAI's DALL-E
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       if (!topic) {
         throw new Error("Please provide a topic for image generation");
       }
       
-      // In a real implementation, this would call the OpenAI DALL-E API
-      // For now, just use a placeholder image
       const randomId = Math.floor(Math.random() * 1000);
-      setGeneratedImage(`https://placehold.co/800x600/EEE/31343C?text=AI+Generated+Image+for+${encodeURIComponent(topic)}+${randomId}`);
+      const encodedTopic = encodeURIComponent(topic);
+      setGeneratedImage(`https://source.unsplash.com/featured/?${encodedTopic}&sig=${randomId}`);
       
       toast({
         title: "Image generated",
@@ -243,10 +233,8 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   const handleSaveAsDraft = () => {
     if (!generatedContent) return;
     
-    // Get existing drafts or initialize empty array
     const existingDrafts = JSON.parse(localStorage.getItem('contentDrafts') || '[]');
     
-    // Create new draft
     const newDraft = {
       id: Date.now().toString(),
       title: topic ? generateTitle(topic) : "Untitled Draft",
@@ -255,7 +243,6 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       status: "draft"
     };
     
-    // Add to drafts and save
     localStorage.setItem('contentDrafts', JSON.stringify([newDraft, ...existingDrafts]));
     
     toast({
@@ -263,20 +250,20 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       description: "Your content has been saved as a draft!",
     });
     
-    onClose();
+    if (userPlan) {
+      onClose();
+    }
   };
 
   const handleSchedulePost = () => {
     if (!generatedContent) return;
     
-    // Get existing posts or initialize empty array
     const existingPosts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
     
-    // Schedule date (default to tomorrow)
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(9, 0, 0, 0);
     
-    // Create new scheduled post
     const newPost = {
       id: Date.now().toString(),
       title: topic ? generateTitle(topic) : "Scheduled Post",
@@ -285,7 +272,6 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       status: "scheduled"
     };
     
-    // Add to scheduled posts and save
     localStorage.setItem('scheduledPosts', JSON.stringify([newPost, ...existingPosts]));
     
     toast({
@@ -293,7 +279,9 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       description: "Your content has been scheduled for tomorrow!",
     });
     
-    onClose();
+    if (userPlan) {
+      onClose();
+    }
   };
 
   const formatContent = (content: string) => {
@@ -453,7 +441,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
                       formatContent(generatedContent)
                     ) : (
                       <div className="space-y-8">
-                        {generatedCalendar.map((post, i) => (
+                        {generatedCalendar.slice(0, 10).map((post, i) => (
                           <div key={i} className="bg-white p-4 rounded-md border">
                             <div className="flex justify-between items-center mb-2">
                               <span className="text-sm text-gray-500 flex items-center">
@@ -468,6 +456,14 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
                             {formatContent(post.content)}
                           </div>
                         ))}
+                        {generatedCalendar.length > 10 && (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-gray-500">Showing 10 of {generatedCalendar.length} posts</p>
+                            <Button variant="outline" size="sm" className="mt-2">
+                              View All Posts
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

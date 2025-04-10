@@ -1,174 +1,168 @@
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check, AlertTriangle, Key, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { usePlan } from "@/contexts/PlanContext";
-import { Key, Save, EyeOff, Eye, Check, AlertTriangle } from "lucide-react";
 
-const ApiKeySettings = () => {
-  const [apiKey, setApiKey] = useState("");
+interface ApiKeySettingsProps {
+  serviceName: string;
+  apiKey: string;
+  onApiKeyChange: (key: string) => void;
+  keyPrefix?: string;
+  minLength?: number;
+  description?: string;
+  learnMoreUrl?: string;
+}
+
+const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
+  serviceName,
+  apiKey,
+  onApiKeyChange,
+  keyPrefix = "sk-",
+  minLength = 20,
+  description,
+  learnMoreUrl
+}) => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKeyStatus, setApiKeyStatus] = useState<"valid" | "invalid" | "untested">("untested");
   const { toast } = useToast();
-  const { canUseCustomApiKey } = usePlan();
-  
-  // Load API key from localStorage on component mount
+
+  // Validate key on mount or when it changes
   useEffect(() => {
-    const storedApiKey = localStorage.getItem("openAIApiKey");
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
+    if (apiKey) {
+      validateApiKey(apiKey);
+    }
+  }, [apiKey]);
+
+  const validateApiKey = (key: string) => {
+    // Basic API key validation
+    if (key.startsWith(keyPrefix) && key.length >= minLength) {
       setApiKeyStatus("valid");
-    }
-  }, []);
-  
-  const handleSaveApiKey = () => {
-    if (!apiKey) {
-      // If clearing the API key
-      localStorage.removeItem("openAIApiKey");
-      setApiKeyStatus("untested");
-      toast({
-        title: "API Key Cleared",
-        description: "Your OpenAI API key has been removed from settings.",
-      });
-      return;
-    }
-    
-    // Basic validation for OpenAI API key
-    if (!apiKey.startsWith("sk-") || apiKey.length < 20) {
+      return true;
+    } else if (key) {
       setApiKeyStatus("invalid");
-      toast({
-        title: "Invalid API Key",
-        description: "Please enter a valid OpenAI API key starting with 'sk-'.",
-        variant: "destructive",
-      });
-      return;
+      return false;
+    } else {
+      setApiKeyStatus("untested");
+      return false;
     }
+  };
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newKey = e.target.value;
+    onApiKeyChange(newKey);
     
-    // Save API key to localStorage
-    localStorage.setItem("openAIApiKey", apiKey);
-    setApiKeyStatus("valid");
+    // Validate input
+    const isValid = validateApiKey(newKey);
+    
+    if (newKey && isValid) {
+      // Store in localStorage
+      localStorage.setItem(serviceName.toLowerCase().replace(/\s+/g, '') + "ApiKey", newKey);
+      
+      toast({
+        title: `${serviceName} API Key Saved`,
+        description: `Your ${serviceName} API key has been saved securely.`,
+      });
+    }
+  };
+
+  const handleClearApiKey = () => {
+    onApiKeyChange("");
+    setApiKeyStatus("untested");
+    localStorage.removeItem(serviceName.toLowerCase().replace(/\s+/g, '') + "ApiKey");
     
     toast({
-      title: "API Key Saved",
-      description: "Your OpenAI API key has been saved successfully.",
+      title: `${serviceName} API Key Removed`,
+      description: `Your ${serviceName} API key has been removed.`,
     });
   };
-  
-  const validateApiKey = (value: string) => {
-    setApiKey(value);
-    
-    if (!value) {
-      setApiKeyStatus("untested");
-      return;
-    }
-    
-    // Basic validation
-    if (value.startsWith("sk-") && value.length > 20) {
-      setApiKeyStatus("valid");
-    } else {
-      setApiKeyStatus("invalid");
-    }
-  };
-  
-  const toggleShowApiKey = () => {
-    setShowApiKey(!showApiKey);
-  };
-  
-  if (!canUseCustomApiKey) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Key className="mr-2 h-5 w-5" />
-            API Keys
-          </CardTitle>
-          <CardDescription>
-            Manage your API keys for content generation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-amber-50 text-amber-800 p-4 rounded-md border border-amber-200">
-            <p className="text-sm">
-              Custom API keys are only available with a Pro+ plan. Upgrade your plan to use your own OpenAI API key.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Key className="mr-2 h-5 w-5" />
-          API Keys
-        </CardTitle>
-        <CardDescription>
-          Manage your API keys for content generation
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="openai-api-key">OpenAI API Key</Label>
-          <div className="relative flex">
-            <Input
-              id="openai-api-key"
-              type={showApiKey ? "text" : "password"}
-              placeholder="sk-..."
-              value={apiKey}
-              onChange={(e) => validateApiKey(e.target.value)}
-              className={`flex-1 ${
-                apiKeyStatus === "valid" ? "border-green-500 pr-10" : 
-                apiKeyStatus === "invalid" ? "border-red-500 pr-10" : ""
-              }`}
-            />
-            {apiKeyStatus === "valid" && (
-              <Check className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
-            )}
-            {apiKeyStatus === "invalid" && (
-              <AlertTriangle className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
-            )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleShowApiKey}
-              className="ml-2"
-              type="button"
-            >
-              {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
-          </div>
-          <div className="flex flex-col space-y-1">
-            <p className="text-xs text-gray-500">
-              Your API key is required for content and image generation. 
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor={`${serviceName.toLowerCase()}-api-key`} className="text-base font-medium">
+          {serviceName} API Key
+        </Label>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+      
+      <div className="relative">
+        <Input
+          id={`${serviceName.toLowerCase()}-api-key`}
+          type={showApiKey ? "text" : "password"}
+          value={apiKey}
+          onChange={handleApiKeyChange}
+          placeholder={`${keyPrefix}...`}
+          className={`pr-20 ${
+            apiKeyStatus === "valid" ? "border-green-500" : 
+            apiKeyStatus === "invalid" ? "border-red-500" : ""
+          }`}
+        />
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            type="button"
+            onClick={() => setShowApiKey(!showApiKey)}
+            className="h-7 w-7 mr-1"
+          >
+            <Key className="h-3.5 w-3.5" />
+          </Button>
+          
+          {apiKeyStatus === "valid" && (
+            <span className="h-7 w-7 flex items-center justify-center text-green-500">
+              <Check className="h-4 w-4" />
+            </span>
+          )}
+          
+          {apiKeyStatus === "invalid" && (
+            <span className="h-7 w-7 flex items-center justify-center text-red-500">
+              <AlertTriangle className="h-4 w-4" />
+            </span>
+          )}
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center">
+        <p className="text-xs text-muted-foreground">
+          Your API key is stored locally and never shared
+        </p>
+        
+        {apiKey && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleClearApiKey}
+            className="h-7 text-xs"
+          >
+            Clear Key
+          </Button>
+        )}
+      </div>
+      
+      {learnMoreUrl && (
+        <Alert variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+          <div className="flex items-center">
+            <Sparkles className="h-4 w-4 text-blue-500 mr-2" />
+            <AlertDescription className="text-sm">
               <a 
-                href="https://platform.openai.com/api-keys" 
+                href={learnMoreUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-linkedin-primary hover:underline ml-1"
+                className="text-blue-600 hover:underline"
               >
-                Get your OpenAI API key
+                Learn how to get a {serviceName} API key
               </a>
-            </p>
-            {apiKeyStatus === "valid" && (
-              <p className="text-xs text-green-600 flex items-center">
-                <Check className="h-3 w-3 mr-1" /> Your API key is valid and ready to use
-              </p>
-            )}
+            </AlertDescription>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSaveApiKey} className="flex items-center">
-          <Save className="mr-2 h-4 w-4" />
-          Save API Key
-        </Button>
-      </CardFooter>
-    </Card>
+        </Alert>
+      )}
+    </div>
   );
 };
 

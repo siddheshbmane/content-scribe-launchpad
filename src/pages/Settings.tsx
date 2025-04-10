@@ -1,103 +1,146 @@
+
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
-import { Check, CreditCard, Key, Lock, Shield, Trash2, UserCircle, Zap } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { HelpCircle, Linkedin, Key, Check, AlertTriangle, Sparkles } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ApiKeySettings from "@/components/ApiKeySettings";
+import ModelSelector from "@/components/ModelSelector";
 
 const Settings = () => {
   const { user } = useAuth();
-  const { userPlan, plans, upgradePlan, isLoading } = usePlan();
+  const { userPlan, upgradePlan, plans, isLoading } = usePlan();
   const { toast } = useToast();
+  const [selectedTab, setSelectedTab] = useState("account");
+  
+  // API Key state
   const [openAIApiKey, setOpenAIApiKey] = useState("");
-  const [isSavingApiKey, setIsSavingApiKey] = useState(false);
-  const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [apiKeyStatus, setApiKeyStatus] = useState<"untested" | "valid" | "invalid">("untested");
-
+  const [apiKeyStatus, setApiKeyStatus] = useState<"valid" | "invalid" | "untested">("untested");
+  
+  // Account settings state
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [jobTitle, setJobTitle] = useState("");
+  const [industry, setIndustry] = useState("");
+  
+  // Notification settings state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [contentReminders, setContentReminders] = useState(true);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+  
+  // LinkedIn settings state
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
+  
+  // Content preferences state
+  const [defaultTone, setDefaultTone] = useState("professional");
+  const [defaultModel, setDefaultModel] = useState("gpt3.5");
+  
+  // Load stored API key on mount
   useEffect(() => {
-    const savedApiKey = localStorage.getItem("openAIApiKey");
-    if (savedApiKey) {
-      setOpenAIApiKey(savedApiKey);
+    const storedApiKey = localStorage.getItem("openAIApiKey");
+    if (storedApiKey) {
+      setOpenAIApiKey(storedApiKey);
+      setApiKeyStatus("valid");
     }
   }, []);
 
-  const handleUpgrade = async (planType: "free" | "pro" | "proPlus") => {
+  const handleSaveAccount = () => {
+    // In a real app, this would update the user's account info in the database
+    toast({
+      title: "Account Updated",
+      description: "Your account information has been updated successfully."
+    });
+  };
+
+  const handleSaveNotifications = () => {
+    // In a real app, this would update the user's notification settings in the database
+    toast({
+      title: "Notification Settings Saved",
+      description: "Your notification preferences have been updated successfully."
+    });
+  };
+  
+  const handleConnectLinkedIn = () => {
+    // In a real app, this would initiate the LinkedIn OAuth flow
+    toast({
+      title: "LinkedIn Integration",
+      description: "LinkedIn authentication is not implemented in this MVP version."
+    });
+  };
+  
+  const handleDisconnectLinkedIn = () => {
+    setLinkedInConnected(false);
+    toast({
+      title: "LinkedIn Disconnected",
+      description: "Your LinkedIn account has been disconnected."
+    });
+  };
+  
+  const handleSaveContentPreferences = () => {
+    // In a real app, this would update the user's content preferences in the database
+    localStorage.setItem("defaultTone", defaultTone);
+    localStorage.setItem("defaultModel", defaultModel);
+    
+    toast({
+      title: "Content Preferences Saved",
+      description: "Your content preferences have been updated successfully."
+    });
+  };
+
+  const handleUpgradePlan = async (planType: "free" | "pro" | "proPlus") => {
+    if (isLoading) return;
+
     try {
       await upgradePlan(planType);
       toast({
-        title: "Plan updated",
-        description: `Your subscription has been updated to ${plans[planType].name}.`,
+        title: "Plan Updated",
+        description: `Your plan has been updated to ${plans[planType].name}!`
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "There was an error updating your plan. Please try again.",
-        variant: "destructive",
+        description: "Failed to update your plan. Please try again.",
+        variant: "destructive"
       });
     }
   };
-
-  const saveApiKey = () => {
-    setIsSavingApiKey(true);
-    try {
-      localStorage.setItem("openAIApiKey", openAIApiKey);
-      toast({
-        title: "API Key Saved",
-        description: "Your OpenAI API key has been saved successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error saving your API key. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingApiKey(false);
-    }
-  };
-
-  const testApiKey = async () => {
-    setIsTestingConnection(true);
-    setApiKeyStatus("untested");
+  
+  const handleApiKeyChange = (key: string) => {
+    setOpenAIApiKey(key);
     
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      if (openAIApiKey && openAIApiKey.trim() !== "") {
+    // Basic OpenAI API key validation
+    if (key) {
+      if (key.startsWith("sk-") && key.length > 20) {
         setApiKeyStatus("valid");
-        toast({
-          title: "Connection Successful",
-          description: "Your OpenAI API key is valid.",
-        });
+        localStorage.setItem("openAIApiKey", key);
       } else {
         setApiKeyStatus("invalid");
-        toast({
-          title: "Connection Failed",
-          description: "Please enter a valid OpenAI API key.",
-          variant: "destructive",
-        });
       }
-    } catch (error) {
-      setApiKeyStatus("invalid");
-      toast({
-        title: "Connection Failed",
-        description: "Could not verify your OpenAI API key. Please check and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsTestingConnection(false);
+    } else {
+      setApiKeyStatus("untested");
     }
+  };
+  
+  const handleApiKeyClear = () => {
+    setOpenAIApiKey("");
+    setApiKeyStatus("untested");
+    localStorage.removeItem("openAIApiKey");
+    
+    toast({
+      title: "API Key Removed",
+      description: "Your OpenAI API key has been removed."
+    });
   };
 
   return (
@@ -106,500 +149,482 @@ const Settings = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">
-            Manage your account settings and subscription
+            Manage your account settings and preferences
           </p>
         </div>
 
-        <Tabs defaultValue="subscription">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="subscription">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Subscription
-            </TabsTrigger>
-            <TabsTrigger value="account">
-              <UserCircle className="h-4 w-4 mr-2" />
-              Account
-            </TabsTrigger>
-            <TabsTrigger value="security">
-              <Lock className="h-4 w-4 mr-2" />
-              Security
-            </TabsTrigger>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <TabsList className="grid grid-cols-5 md:w-[600px]">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="api">API Keys</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="subscription" className="space-y-6">
+          {/* Account Settings Tab */}
+          <TabsContent value="account" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Your Current Plan</CardTitle>
+                <CardTitle>Account Information</CardTitle>
                 <CardDescription>
-                  You are currently on the {userPlan ? plans[userPlan.planType].name : "Free"} plan.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 bg-linkedin-light rounded-full flex items-center justify-center">
-                      <Zap className="h-5 w-5 text-linkedin-primary" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="font-medium">{userPlan ? plans[userPlan.planType].name : "Free"} Plan</p>
-                      <p className="text-sm text-gray-500">
-                        {userPlan ? (
-                          userPlan.planType === "free" 
-                            ? "Limited to 2 posts per month" 
-                            : userPlan.planType === "pro"
-                              ? "Up to 30 posts per month"
-                              : "Unlimited posts"
-                        ) : "Limited to 2 posts per month"}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-gray-600">
-                    Current Plan
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <h3 className="text-lg font-medium">Available Plans</h3>
-            
-            <div className="grid gap-6 md:grid-cols-3">
-              <Card className={cn(
-                "overflow-hidden",
-                userPlan?.planType === "free" && "border-2 border-linkedin-primary"
-              )}>
-                <CardHeader className="pb-3">
-                  <CardTitle>Free</CardTitle>
-                  <div className="text-3xl font-bold">$0</div>
-                </CardHeader>
-                <CardContent className="pb-1">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>2 posts per month</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>Basic AI content generation</span>
-                    </li>
-                    <li className="flex items-start text-gray-500">
-                      <span className="h-4 w-4 mr-2 mt-0.5">✕</span>
-                      <span>No calendar access</span>
-                    </li>
-                    <li className="flex items-start text-gray-500">
-                      <span className="h-4 w-4 mr-2 mt-0.5">✕</span>
-                      <span>Watermarked images only</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter className="pt-3">
-                  <Button 
-                    variant={userPlan?.planType === "free" ? "outline" : "default"} 
-                    className="w-full"
-                    onClick={() => handleUpgrade("free")}
-                    disabled={userPlan?.planType === "free" || isLoading}
-                  >
-                    {userPlan?.planType === "free" ? "Current Plan" : "Downgrade"}
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              <Card className={cn(
-                "overflow-hidden",
-                userPlan?.planType === "pro" && "border-2 border-linkedin-primary"
-              )}>
-                <CardHeader className="pb-3">
-                  <CardTitle>Pro</CardTitle>
-                  <div className="text-3xl font-bold">$29<span className="text-base font-normal text-gray-500">/mo</span></div>
-                </CardHeader>
-                <CardContent className="pb-1">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>30 posts per month</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>Full content calendar</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>AI image generator</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>Post scheduling</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter className="pt-3">
-                  <Button 
-                    variant={userPlan?.planType === "pro" ? "outline" : "default"} 
-                    className="w-full"
-                    onClick={() => handleUpgrade("pro")}
-                    disabled={userPlan?.planType === "pro" || isLoading}
-                  >
-                    {userPlan?.planType === "pro" ? "Current Plan" : userPlan?.planType === "proPlus" ? "Downgrade" : "Upgrade"}
-                  </Button>
-                </CardFooter>
-              </Card>
-              
-              <Card className={cn(
-                "overflow-hidden",
-                userPlan?.planType === "proPlus" && "border-2 border-linkedin-primary"
-              )}>
-                <CardHeader className="pb-3">
-                  <CardTitle>Pro Plus</CardTitle>
-                  <div className="text-3xl font-bold">$49<span className="text-base font-normal text-gray-500">/mo</span></div>
-                </CardHeader>
-                <CardContent className="pb-1">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>Unlimited posts</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>All Pro features</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>Use your own OpenAI key</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5" />
-                      <span>Advanced analytics</span>
-                    </li>
-                  </ul>
-                </CardContent>
-                <CardFooter className="pt-3">
-                  <Button 
-                    variant={userPlan?.planType === "proPlus" ? "outline" : "default"} 
-                    className="w-full"
-                    onClick={() => handleUpgrade("proPlus")}
-                    disabled={userPlan?.planType === "proPlus" || isLoading}
-                  >
-                    {userPlan?.planType === "proPlus" ? "Current Plan" : "Upgrade"}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg border mt-6">
-              <div className="flex items-center">
-                <Shield className="h-5 w-5 text-gray-500 mr-2" />
-                <span className="font-medium">Payment Information</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">
-                For this MVP, no actual payments are processed. In a production environment, 
-                this would connect to Razorpay for secure payment processing.
-              </p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="account" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>
-                  Update your account profile and preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-center gap-6">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={user?.profileImage} alt={user?.name} />
-                    <AvatarFallback className="text-lg">{user?.name?.charAt(0) || "U"}</AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1.5">
-                    <h3 className="font-semibold">{user?.name}</h3>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
-                    <Button size="sm" variant="outline">Change Avatar</Button>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" defaultValue={user?.name} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue={user?.email} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company (Optional)</Label>
-                    <Input id="company" placeholder="Your company name" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Job Title (Optional)</Label>
-                    <Input id="title" placeholder="Your job title" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="linkedin">LinkedIn Profile URL</Label>
-                  <Input id="linkedin" placeholder="https://linkedin.com/in/username" />
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="ghost">Cancel</Button>
-                <Button>Save Changes</Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Preferences</CardTitle>
-                <CardDescription>
-                  Configure your notification and content preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium">Notifications</h3>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="email-notifs">Email Notifications</Label>
-                      <p className="text-sm text-gray-500">
-                        Receive emails about your scheduled posts and content ideas
-                      </p>
-                    </div>
-                    <Switch id="email-notifs" defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="post-reminders">Post Reminders</Label>
-                      <p className="text-sm text-gray-500">
-                        Get reminders when you have posts scheduled to publish
-                      </p>
-                    </div>
-                    <Switch id="post-reminders" defaultChecked />
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium">Content Preferences</h3>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="default-tone">Default Tone</Label>
-                      <p className="text-sm text-gray-500">
-                        Select your preferred tone for generated content
-                      </p>
-                    </div>
-                    <div className="w-40">
-                      <select id="default-tone" className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
-                        <option value="professional">Professional</option>
-                        <option value="friendly">Friendly</option>
-                        <option value="educational">Educational</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="default-model">Default AI Model</Label>
-                      <p className="text-sm text-gray-500">
-                        Select your preferred AI model for content generation
-                      </p>
-                    </div>
-                    <div className="w-40">
-                      <select id="default-model" className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
-                        <option value="gpt3.5">GPT-3.5 Turbo</option>
-                        <option value="gpt4" disabled={!userPlan || userPlan.planType !== "proPlus"}>
-                          GPT-4 (Pro+ Only)
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="ghost">Reset to Defaults</Button>
-                <Button>Save Preferences</Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-red-600">Delete Account</CardTitle>
-                <CardDescription>
-                  Permanently delete your account and all data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">
-                  This action cannot be undone. This will permanently delete your account and remove your data from our servers.
-                </p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="destructive" className="flex items-center">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Account
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="security" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Password</CardTitle>
-                <CardDescription>
-                  Update your password to keep your account secure
+                  Update your account details here
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input id="current-password" type="password" />
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" value={name} onChange={e => setName(e.target.value)} />
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" />
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} disabled />
+                  <p className="text-xs text-muted-foreground">Your email address cannot be changed</p>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input id="confirm-password" type="password" />
+                  <Label htmlFor="job-title">Job Title</Label>
+                  <Input id="job-title" value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="e.g., Marketing Manager" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="industry">Industry</Label>
+                  <Input id="industry" value={industry} onChange={e => setIndustry(e.target.value)} placeholder="e.g., Technology" />
                 </div>
               </CardContent>
               <CardFooter>
-                <Button>Update Password</Button>
+                <Button onClick={handleSaveAccount}>Save Changes</Button>
               </CardFooter>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle>OpenAI API Key</CardTitle>
+                <CardTitle>LinkedIn Integration</CardTitle>
                 <CardDescription>
-                  Add your OpenAI API key to enable AI-powered content generation
+                  Connect your LinkedIn account for publishing posts
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center">
-                    <Key className="h-4 w-4 mr-2 text-gray-500" />
-                    <Label htmlFor="openai-api-key">API Key</Label>
+              <CardContent>
+                {linkedInConnected ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Linkedin className="h-5 w-5 text-linkedin-primary" />
+                      <div>
+                        <p className="font-medium">LinkedIn Connected</p>
+                        <p className="text-sm text-muted-foreground">Your account is connected and ready to publish</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleDisconnectLinkedIn}>Disconnect</Button>
                   </div>
-                  <Input 
-                    id="openai-api-key" 
-                    type="password" 
-                    placeholder="sk-..." 
-                    value={openAIApiKey}
-                    onChange={(e) => setOpenAIApiKey(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-500">
-                    Your API key is stored securely and only used for your content generation.
-                    You can find your API key in the{" "}
-                    <a 
-                      href="https://platform.openai.com/api-keys" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-linkedin-primary hover:underline"
-                    >
-                      OpenAI dashboard
-                    </a>.
-                  </p>
-                </div>
-                
-                {apiKeyStatus !== "untested" && (
-                  <div className={cn(
-                    "p-3 rounded-md text-sm",
-                    apiKeyStatus === "valid" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-                  )}>
-                    {apiKeyStatus === "valid" 
-                      ? "✓ API key is valid and connected" 
-                      : "✗ API key is invalid or connection failed"}
+                ) : (
+                  <div>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                      Connecting your LinkedIn account allows for direct posting and scheduling from ContentScribe
+                    </p>
+                    <Button className="flex items-center" onClick={handleConnectLinkedIn}>
+                      <Linkedin className="mr-2 h-4 w-4" />
+                      Connect LinkedIn
+                    </Button>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button 
-                  variant="outline" 
-                  onClick={testApiKey}
-                  disabled={isTestingConnection || !openAIApiKey}
-                >
-                  {isTestingConnection ? "Testing..." : "Test Connection"}
-                </Button>
-                <Button 
-                  onClick={saveApiKey}
-                  disabled={isSavingApiKey || !openAIApiKey}
-                >
-                  {isSavingApiKey ? "Saving..." : "Save API Key"}
-                </Button>
-              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* API Keys Tab */}
+          <TabsContent value="api" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>API Keys</CardTitle>
+                <CardDescription>
+                  Manage your API keys for AI services
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">OpenAI API Key</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Used for content generation with models like GPT-3.5 and GPT-4
+                      </p>
+                    </div>
+                    
+                    {userPlan && !plans[userPlan.planType].canUseOwnApiKey && (
+                      <Badge variant="outline" className="text-amber-600 border-amber-600">Pro+ Required</Badge>
+                    )}
+                  </div>
+                  
+                  {userPlan && plans[userPlan.planType].canUseOwnApiKey ? (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Input
+                          type="password"
+                          value={openAIApiKey}
+                          onChange={(e) => handleApiKeyChange(e.target.value)}
+                          placeholder="sk-..."
+                          className={`${
+                            apiKeyStatus === "valid" ? "border-green-500 pr-10" : 
+                            apiKeyStatus === "invalid" ? "border-red-500 pr-10" : ""
+                          }`}
+                        />
+                        {apiKeyStatus === "valid" && (
+                          <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+                        )}
+                        {apiKeyStatus === "invalid" && (
+                          <AlertTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Your API key is stored locally and used only for your content generation
+                        </p>
+                        
+                        {openAIApiKey && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleApiKeyClear}
+                            className="text-xs"
+                          >
+                            Clear Key
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="mt-2">
+                        <Alert variant="outline">
+                          <div className="flex items-center">
+                            <Sparkles className="h-4 w-4 text-amber-600 mr-2" />
+                            <AlertDescription className="text-sm">
+                              Using your own API key allows access to premium models like GPT-4 and lets you control usage limits
+                            </AlertDescription>
+                          </div>
+                        </Alert>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-sm">
+                        Upgrade to Pro+ plan to use your own API keys for content generation
+                      </p>
+                      <Button 
+                        className="mt-2" 
+                        onClick={() => handleUpgradePlan("proPlus")}
+                        disabled={isLoading}
+                      >
+                        Upgrade to Pro+
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">Stable Diffusion API Key</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Used for image generation in carousel posts
+                      </p>
+                    </div>
+                    
+                    <Badge variant="outline" className="text-gray-600">Coming Soon</Badge>
+                  </div>
+                  
+                  <Input placeholder="Coming soon..." disabled />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Billing Tab */}
+          <TabsContent value="billing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Plan</CardTitle>
+                <CardDescription>
+                  Manage your subscription and billing details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold">Current Plan</p>
+                      <p className="text-2xl font-bold">
+                        {userPlan ? plans[userPlan.planType].name : "Free"}
+                      </p>
+                    </div>
+                    
+                    {userPlan && userPlan.planType !== "free" && (
+                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  {/* Free Plan */}
+                  <Card className={`border ${userPlan?.planType === "free" ? "border-linkedin-primary" : ""}`}>
+                    <CardHeader className="pb-3">
+                      <CardTitle>Free</CardTitle>
+                      <CardDescription>Basic access to content tools</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="text-2xl font-bold">$0<span className="text-base font-normal text-muted-foreground">/mo</span></div>
+                      <Separator className="my-4" />
+                      <ul className="space-y-2 text-sm">
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>2 AI posts per month</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Basic content templates</span>
+                        </li>
+                        <li className="flex items-center text-muted-foreground">
+                          <AlertTriangle className="mr-2 h-4 w-4" />
+                          <span>Watermark on images</span>
+                        </li>
+                        <li className="flex items-center text-muted-foreground">
+                          <AlertTriangle className="mr-2 h-4 w-4" />
+                          <span>No publishing features</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      {userPlan?.planType === "free" ? (
+                        <Button className="w-full" disabled>Current Plan</Button>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => handleUpgradePlan("free")}
+                          disabled={isLoading}
+                        >
+                          Downgrade
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* Pro Plan */}
+                  <Card className={`border ${userPlan?.planType === "pro" ? "border-linkedin-primary" : ""}`}>
+                    <CardHeader className="pb-3">
+                      <CardTitle>Pro</CardTitle>
+                      <CardDescription>For serious content creators</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="text-2xl font-bold">$29<span className="text-base font-normal text-muted-foreground">/mo</span></div>
+                      <Separator className="my-4" />
+                      <ul className="space-y-2 text-sm">
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>30 AI posts per month</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Content calendar access</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Image generation</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>No watermarks</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      {userPlan?.planType === "pro" ? (
+                        <Button className="w-full" disabled>Current Plan</Button>
+                      ) : (
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleUpgradePlan("pro")}
+                          disabled={isLoading}
+                        >
+                          {userPlan?.planType === "proPlus" ? "Downgrade" : "Upgrade"}
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                  
+                  {/* Pro Plus Plan */}
+                  <Card className={`border ${userPlan?.planType === "proPlus" ? "border-linkedin-primary" : ""}`}>
+                    <CardHeader className="pb-3">
+                      <CardTitle>Pro Plus</CardTitle>
+                      <CardDescription>Maximum content power</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="text-2xl font-bold">$49<span className="text-base font-normal text-muted-foreground">/mo</span></div>
+                      <Separator className="my-4" />
+                      <ul className="space-y-2 text-sm">
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Unlimited AI posts</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>All Pro features</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Use your own API keys</span>
+                        </li>
+                        <li className="flex items-center">
+                          <Check className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Priority support</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                    <CardFooter>
+                      {userPlan?.planType === "proPlus" ? (
+                        <Button className="w-full" disabled>Current Plan</Button>
+                      ) : (
+                        <Button 
+                          className="w-full"
+                          onClick={() => handleUpgradePlan("proPlus")}
+                          disabled={isLoading}
+                        >
+                          Upgrade
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                </div>
+              </CardContent>
             </Card>
             
             <Card>
               <CardHeader>
-                <CardTitle>Two-Factor Authentication</CardTitle>
+                <CardTitle>Payment Method</CardTitle>
                 <CardDescription>
-                  Add an extra layer of security to your account
+                  Manage your payment details
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Payment methods will be enabled for paid plans in the full version
+                </p>
+                <Button disabled>Add Payment Method</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Preferences Tab */}
+          <TabsContent value="preferences" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Content Preferences</CardTitle>
+                <CardDescription>
+                  Set your default content generation preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Default Tone</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div 
+                      className={`border rounded-md p-3 cursor-pointer ${defaultTone === "friendly" ? "bg-linkedin-light border-linkedin-primary" : ""}`}
+                      onClick={() => setDefaultTone("friendly")}
+                    >
+                      <h3 className="font-medium">Friendly</h3>
+                      <p className="text-sm text-muted-foreground">Conversational and approachable</p>
+                    </div>
+                    <div 
+                      className={`border rounded-md p-3 cursor-pointer ${defaultTone === "professional" ? "bg-linkedin-light border-linkedin-primary" : ""}`}
+                      onClick={() => setDefaultTone("professional")}
+                    >
+                      <h3 className="font-medium">Professional</h3>
+                      <p className="text-sm text-muted-foreground">Polished and business-oriented</p>
+                    </div>
+                    <div 
+                      className={`border rounded-md p-3 cursor-pointer ${defaultTone === "educational" ? "bg-linkedin-light border-linkedin-primary" : ""}`}
+                      onClick={() => setDefaultTone("educational")}
+                    >
+                      <h3 className="font-medium">Educational</h3>
+                      <p className="text-sm text-muted-foreground">Informative and instructional</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Default AI Model</Label>
+                  <ModelSelector 
+                    value={defaultModel}
+                    onChange={setDefaultModel}
+                    canUseCustomApiKey={userPlan ? plans[userPlan.planType].canUseOwnApiKey : false}
+                    apiKey={openAIApiKey}
+                    onApiKeyChange={handleApiKeyChange}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleSaveContentPreferences}>Save Preferences</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification Settings</CardTitle>
+                <CardDescription>
+                  Manage how you receive notifications
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Enable Two-Factor Authentication</Label>
-                    <p className="text-sm text-gray-500">
-                      Protect your account with an additional security layer
+                    <Label htmlFor="email-notifications">Email Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive important account updates via email
                     </p>
                   </div>
-                  <Switch id="enable-2fa" />
+                  <Switch
+                    id="email-notifications"
+                    checked={emailNotifications}
+                    onCheckedChange={setEmailNotifications}
+                  />
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-lg border">
-                  <p className="text-sm text-gray-600">
-                    When two-factor authentication is enabled, you'll be required to enter a code from your authenticator app when logging in.
-                  </p>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Set Up Later</Button>
-                <Button disabled>Set Up Now</Button>
-              </CardFooter>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>LinkedIn Connection</CardTitle>
-                <CardDescription>
-                  Manage your LinkedIn account connection
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center">
-                  <div className="h-10 w-10 bg-[#0077B5] rounded-full flex items-center justify-center mr-4">
-                    <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                    </svg>
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="content-reminders">Content Reminders</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified when it's time to post new content
+                    </p>
                   </div>
-                  <div>
-                    <p className="font-medium">LinkedIn Account</p>
-                    <p className="text-sm text-gray-500">Connected as Demo User</p>
-                  </div>
+                  <Switch
+                    id="content-reminders"
+                    checked={contentReminders}
+                    onCheckedChange={setContentReminders}
+                  />
                 </div>
                 
-                <div className="bg-gray-50 p-4 rounded-lg border">
-                  <p className="text-sm text-gray-600">
-                    Your LinkedIn account is connected. This allows ContentScribe to post content to your LinkedIn profile.
-                  </p>
+                <Separator />
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="marketing-emails">Marketing Emails</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive updates about new features and special offers
+                    </p>
+                  </div>
+                  <Switch
+                    id="marketing-emails"
+                    checked={marketingEmails}
+                    onCheckedChange={setMarketingEmails}
+                  />
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline">Disconnect</Button>
-                <Button variant="outline">Refresh Connection</Button>
+              <CardFooter>
+                <Button onClick={handleSaveNotifications}>Save Notification Settings</Button>
               </CardFooter>
             </Card>
           </TabsContent>
