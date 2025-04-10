@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LinkedIn } from "lucide-react";
+import { Linkedin } from "lucide-react";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -179,7 +178,7 @@ const Register = () => {
                 onClick={handleLinkedInRegister}
                 disabled={isSubmitting}
               >
-                <LinkedIn className="w-5 h-5 mr-2 text-linkedin-primary" />
+                <Linkedin className="w-5 h-5 mr-2 text-linkedin-primary" />
                 Sign up with LinkedIn
               </Button>
             </div>

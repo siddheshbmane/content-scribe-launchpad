@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import {
   Sparkles, 
   Globe, 
   ChevronRight,
-  LinkedIn
+  Linkedin
 } from "lucide-react";
 
 const Index = () => {
@@ -54,7 +53,7 @@ const Index = () => {
             </Link>
             <Link to="/login">
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
-                <LinkedIn className="mr-2 h-5 w-5" /> Sign in with LinkedIn
+                <Linkedin className="mr-2 h-5 w-5" /> Sign in with LinkedIn
               </Button>
             </Link>
           </div>

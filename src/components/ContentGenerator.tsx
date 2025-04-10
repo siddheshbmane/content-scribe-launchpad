@@ -60,9 +60,12 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
       await new Promise(resolve => setTimeout(resolve, 2500));
       
       // Placeholder content
-      const content = contentType === "single"
-        ? `# ${generateTitle(topic)}\n\nDid you know that LinkedIn posts with personal stories get 3x more engagement than purely promotional content?\n\nHere's what I've learned about ${topic} after 5 years in the industry:\n\n1️⃣ The fundamentals never change - focus on providing value first\n2️⃣ Building relationships matters more than vanity metrics\n3️⃣ Consistency beats perfection every single time\n\nWhat's been your experience with ${topic}? Share in the comments below! 👇\n\n#ProfessionalDevelopment #${topic.replace(/\s+/g, '')} #LinkedInTips`
-        : Array.from({ length: 5 }, (_, i) => `# Post ${i + 1}: ${generateTitle(topic)}\n\nLooking to improve your ${topic} skills? Here's what most people get wrong...\n\nThe secret isn't working harder, it's about working smarter.\n\nI've helped over 100 professionals master ${topic} using these simple techniques:\n\n- Start with the end goal in mind\n- Break down complex problems into manageable steps\n- Measure progress consistently\n\nWant to learn more? Check out my free guide in the comments! 💡\n\n#${topic.replace(/\s+/g, '')} #CareerGrowth #ProfessionalTips`);
+      let content;
+      if (contentType === "single") {
+        content = `# ${generateTitle(topic)}\n\nDid you know that LinkedIn posts with personal stories get 3x more engagement than purely promotional content?\n\nHere's what I've learned about ${topic} after 5 years in the industry:\n\n1️⃣ The fundamentals never change - focus on providing value first\n2️⃣ Building relationships matters more than vanity metrics\n3️⃣ Consistency beats perfection every single time\n\nWhat's been your experience with ${topic}? Share in the comments below! 👇\n\n#ProfessionalDevelopment #${topic.replace(/\s+/g, '')} #LinkedInTips`;
+      } else {
+        content = Array.from({ length: 5 }, (_, i) => `# Post ${i + 1}: ${generateTitle(topic)}\n\nLooking to improve your ${topic} skills? Here's what most people get wrong...\n\nThe secret isn't working harder, it's about working smarter.\n\nI've helped over 100 professionals master ${topic} using these simple techniques:\n\n- Start with the end goal in mind\n- Break down complex problems into manageable steps\n- Measure progress consistently\n\nWant to learn more? Check out my free guide in the comments! 💡\n\n#${topic.replace(/\s+/g, '')} #CareerGrowth #ProfessionalTips`).join('\n\n\n');
+      }
       
       setGeneratedContent(content);
       
