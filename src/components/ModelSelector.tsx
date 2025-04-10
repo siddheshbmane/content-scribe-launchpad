@@ -4,7 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Check, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ModelSelectorProps {
   value: string;
@@ -22,6 +23,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   onApiKeyChange
 }) => {
   const [savedApiKey, setSavedApiKey] = useState("");
+  const [apiKeyStatus, setApiKeyStatus] = useState<"valid" | "invalid" | "untested">("untested");
+  const { toast } = useToast();
   
   // Load API key from localStorage on component mount
   useEffect(() => {
@@ -29,15 +32,37 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     if (storedApiKey && storedApiKey !== apiKey) {
       setSavedApiKey(storedApiKey);
       onApiKeyChange(storedApiKey);
+      
+      // If we have a stored API key, assume it's valid until proven otherwise
+      setApiKeyStatus("valid");
     }
   }, [apiKey, onApiKeyChange]);
 
   // Save API key to localStorage when it changes
   const handleApiKeyChange = (value: string) => {
     onApiKeyChange(value);
+    setApiKeyStatus("untested");
+    
     if (value) {
-      localStorage.setItem("openAIApiKey", value);
-      setSavedApiKey(value);
+      // Basic OpenAI API key validation
+      if (value.startsWith("sk-") && value.length > 20) {
+        localStorage.setItem("openAIApiKey", value);
+        setSavedApiKey(value);
+        setApiKeyStatus("valid");
+        
+        toast({
+          title: "API key saved",
+          description: "Your OpenAI API key has been saved securely.",
+        });
+      } else {
+        setApiKeyStatus("invalid");
+        
+        toast({
+          title: "Invalid API key",
+          description: "Please enter a valid OpenAI API key starting with 'sk-'.",
+          variant: "destructive",
+        });
+      }
     }
   };
   
@@ -74,13 +99,27 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
               </Tooltip>
             </TooltipProvider>
           </div>
-          <Input
-            id="apiKey"
-            type="password"
-            placeholder={savedApiKey ? "API key loaded from settings" : "sk-..."}
-            value={apiKey}
-            onChange={(e) => handleApiKeyChange(e.target.value)}
-          />
+          
+          <div className="relative">
+            <Input
+              id="apiKey"
+              type="password"
+              placeholder={savedApiKey ? "API key loaded from settings" : "sk-..."}
+              value={apiKey}
+              onChange={(e) => handleApiKeyChange(e.target.value)}
+              className={`${
+                apiKeyStatus === "valid" ? "border-green-500 pr-10" : 
+                apiKeyStatus === "invalid" ? "border-red-500 pr-10" : ""
+              }`}
+            />
+            {apiKeyStatus === "valid" && (
+              <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
+            {apiKeyStatus === "invalid" && (
+              <AlertTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
+            )}
+          </div>
+          
           <p className="text-xs text-gray-500">
             Your API key is stored securely and used only for your content generation requests.
             {savedApiKey && " Your saved API key has been loaded from settings."}

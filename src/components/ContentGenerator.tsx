@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { usePlan } from "@/contexts/PlanContext";
-import { X, Sparkles, HelpCircle, Image as ImageIcon, Wand2, Calendar, FileText, Copy, Edit, Loader2 } from "lucide-react";
+import { X, Sparkles, HelpCircle, Image as ImageIcon, Wand2, Calendar, FileText, Copy, Edit, Loader2, AlertTriangle } from "lucide-react";
 import ToneSelector from "./ToneSelector";
 import ModelSelector from "./ModelSelector";
 
@@ -38,9 +38,18 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   const [activeTab, setActiveTab] = useState("generate");
   const [imageGenerating, setImageGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [imageApiKeyMissing, setImageApiKeyMissing] = useState(false);
   
   const { toast } = useToast();
   const { canUseCustomApiKey, canCreateMorePosts, setPostsCreated, userPlan } = usePlan();
+
+  // Load API key from localStorage on component mount
+  React.useEffect(() => {
+    const storedApiKey = localStorage.getItem("openAIApiKey");
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+  }, []);
 
   const generateTitle = (input: string) => {
     const titles = [
@@ -187,15 +196,34 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   };
 
   const handleGenerateImage = async () => {
+    // Validate API key first
+    const storedApiKey = localStorage.getItem("openAIApiKey") || apiKey;
+    
+    if (!storedApiKey) {
+      setImageApiKeyMissing(true);
+      toast({
+        title: "API key required",
+        description: "Please add your OpenAI API key in settings to generate images.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setImageGenerating(true);
+    setImageApiKeyMissing(false);
     
     try {
-      // Simulate image generation API call
+      // Simulate image generation API call to OpenAI's DALL-E
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // In a real implementation, this would call an image generation API
+      if (!topic) {
+        throw new Error("Please provide a topic for image generation");
+      }
+      
+      // In a real implementation, this would call the OpenAI DALL-E API
       // For now, just use a placeholder image
-      setGeneratedImage("https://placehold.co/600x400/EEE/31343C?text=AI+Generated+Image+for+" + encodeURIComponent(topic));
+      const randomId = Math.floor(Math.random() * 1000);
+      setGeneratedImage(`https://placehold.co/800x600/EEE/31343C?text=AI+Generated+Image+for+${encodeURIComponent(topic)}+${randomId}`);
       
       toast({
         title: "Image generated",
@@ -204,7 +232,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
     } catch (error) {
       toast({
         title: "Image generation failed",
-        description: "There was an error generating your image. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error generating your image. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -425,7 +453,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
                       formatContent(generatedContent)
                     ) : (
                       <div className="space-y-8">
-                        {generatedContent.split('\n\n\n').map((post, i) => (
+                        {generatedCalendar.map((post, i) => (
                           <div key={i} className="bg-white p-4 rounded-md border">
                             <div className="flex justify-between items-center mb-2">
                               <span className="text-sm text-gray-500 flex items-center">
@@ -437,7 +465,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
                               </Button>
                             </div>
                             <Separator className="my-2" />
-                            {formatContent(post)}
+                            {formatContent(post.content)}
                           </div>
                         ))}
                       </div>
@@ -468,6 +496,24 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
                     )}
                   </Button>
                 </div>
+                
+                {imageApiKeyMissing && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-amber-800">
+                        An OpenAI API key is required for image generation. Please add your API key in the settings.
+                      </p>
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto text-amber-900 text-sm"
+                        onClick={() => window.location.href = '/settings'}
+                      >
+                        Go to Settings
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 
                 {generatedImage && (
                   <div className="mt-4">

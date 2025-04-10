@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { usePlan } from "@/contexts/PlanContext";
-import { Key, Save, EyeOff, Eye } from "lucide-react";
+import { Key, Save, EyeOff, Eye, Check, AlertTriangle } from "lucide-react";
 
 const ApiKeySettings = () => {
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeyStatus, setApiKeyStatus] = useState<"valid" | "invalid" | "untested">("untested");
   const { toast } = useToast();
   const { canUseCustomApiKey } = usePlan();
   
@@ -19,6 +20,7 @@ const ApiKeySettings = () => {
     const storedApiKey = localStorage.getItem("openAIApiKey");
     if (storedApiKey) {
       setApiKey(storedApiKey);
+      setApiKeyStatus("valid");
     }
   }, []);
   
@@ -26,6 +28,7 @@ const ApiKeySettings = () => {
     if (!apiKey) {
       // If clearing the API key
       localStorage.removeItem("openAIApiKey");
+      setApiKeyStatus("untested");
       toast({
         title: "API Key Cleared",
         description: "Your OpenAI API key has been removed from settings.",
@@ -34,7 +37,8 @@ const ApiKeySettings = () => {
     }
     
     // Basic validation for OpenAI API key
-    if (!apiKey.startsWith("sk-") || apiKey.length < 10) {
+    if (!apiKey.startsWith("sk-") || apiKey.length < 20) {
+      setApiKeyStatus("invalid");
       toast({
         title: "Invalid API Key",
         description: "Please enter a valid OpenAI API key starting with 'sk-'.",
@@ -45,11 +49,28 @@ const ApiKeySettings = () => {
     
     // Save API key to localStorage
     localStorage.setItem("openAIApiKey", apiKey);
+    setApiKeyStatus("valid");
     
     toast({
       title: "API Key Saved",
       description: "Your OpenAI API key has been saved successfully.",
     });
+  };
+  
+  const validateApiKey = (value: string) => {
+    setApiKey(value);
+    
+    if (!value) {
+      setApiKeyStatus("untested");
+      return;
+    }
+    
+    // Basic validation
+    if (value.startsWith("sk-") && value.length > 20) {
+      setApiKeyStatus("valid");
+    } else {
+      setApiKeyStatus("invalid");
+    }
   };
   
   const toggleShowApiKey = () => {
@@ -93,15 +114,24 @@ const ApiKeySettings = () => {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="openai-api-key">OpenAI API Key</Label>
-          <div className="flex">
+          <div className="relative flex">
             <Input
               id="openai-api-key"
               type={showApiKey ? "text" : "password"}
               placeholder="sk-..."
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="flex-1"
+              onChange={(e) => validateApiKey(e.target.value)}
+              className={`flex-1 ${
+                apiKeyStatus === "valid" ? "border-green-500 pr-10" : 
+                apiKeyStatus === "invalid" ? "border-red-500 pr-10" : ""
+              }`}
             />
+            {apiKeyStatus === "valid" && (
+              <Check className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
+            {apiKeyStatus === "invalid" && (
+              <AlertTriangle className="absolute right-12 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
+            )}
             <Button
               variant="outline"
               size="icon"
@@ -112,17 +142,24 @@ const ApiKeySettings = () => {
               {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
           </div>
-          <p className="text-xs text-gray-500">
-            Your API key is stored locally and used for content generation. 
-            <a 
-              href="https://platform.openai.com/api-keys" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-linkedin-primary hover:underline ml-1"
-            >
-              Get your OpenAI API key
-            </a>
-          </p>
+          <div className="flex flex-col space-y-1">
+            <p className="text-xs text-gray-500">
+              Your API key is required for content and image generation. 
+              <a 
+                href="https://platform.openai.com/api-keys" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-linkedin-primary hover:underline ml-1"
+              >
+                Get your OpenAI API key
+              </a>
+            </p>
+            {apiKeyStatus === "valid" && (
+              <p className="text-xs text-green-600 flex items-center">
+                <Check className="h-3 w-3 mr-1" /> Your API key is valid and ready to use
+              </p>
+            )}
+          </div>
         </div>
       </CardContent>
       <CardFooter>
