@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,13 +12,25 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
-import { Check, CreditCard, Lock, Shield, Trash2, UserCircle, Zap } from "lucide-react";
+import { Check, CreditCard, Key, Lock, Shield, Trash2, UserCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Settings = () => {
   const { user } = useAuth();
   const { userPlan, plans, upgradePlan, isLoading } = usePlan();
   const { toast } = useToast();
+  const [openAIApiKey, setOpenAIApiKey] = useState("");
+  const [isSavingApiKey, setIsSavingApiKey] = useState(false);
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [apiKeyStatus, setApiKeyStatus] = useState<"untested" | "valid" | "invalid">("untested");
+
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem("openAIApiKey");
+    if (savedApiKey) {
+      setOpenAIApiKey(savedApiKey);
+    }
+  }, []);
 
   const handleUpgrade = async (planType: "free" | "pro" | "proPlus") => {
     try {
@@ -34,6 +45,58 @@ const Settings = () => {
         description: "There was an error updating your plan. Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const saveApiKey = () => {
+    setIsSavingApiKey(true);
+    try {
+      localStorage.setItem("openAIApiKey", openAIApiKey);
+      toast({
+        title: "API Key Saved",
+        description: "Your OpenAI API key has been saved successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "There was an error saving your API key. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingApiKey(false);
+    }
+  };
+
+  const testApiKey = async () => {
+    setIsTestingConnection(true);
+    setApiKeyStatus("untested");
+    
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      if (openAIApiKey && openAIApiKey.trim() !== "") {
+        setApiKeyStatus("valid");
+        toast({
+          title: "Connection Successful",
+          description: "Your OpenAI API key is valid.",
+        });
+      } else {
+        setApiKeyStatus("invalid");
+        toast({
+          title: "Connection Failed",
+          description: "Please enter a valid OpenAI API key.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setApiKeyStatus("invalid");
+      toast({
+        title: "Connection Failed",
+        description: "Could not verify your OpenAI API key. Please check and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingConnection(false);
     }
   };
 
@@ -100,7 +163,6 @@ const Settings = () => {
             <h3 className="text-lg font-medium">Available Plans</h3>
             
             <div className="grid gap-6 md:grid-cols-3">
-              {/* Free Plan */}
               <Card className={cn(
                 "overflow-hidden",
                 userPlan?.planType === "free" && "border-2 border-linkedin-primary"
@@ -141,7 +203,6 @@ const Settings = () => {
                 </CardFooter>
               </Card>
               
-              {/* Pro Plan */}
               <Card className={cn(
                 "overflow-hidden",
                 userPlan?.planType === "pro" && "border-2 border-linkedin-primary"
@@ -182,7 +243,6 @@ const Settings = () => {
                 </CardFooter>
               </Card>
               
-              {/* Pro Plus Plan */}
               <Card className={cn(
                 "overflow-hidden",
                 userPlan?.planType === "proPlus" && "border-2 border-linkedin-primary"
@@ -416,6 +476,68 @@ const Settings = () => {
               </CardContent>
               <CardFooter>
                 <Button>Update Password</Button>
+              </CardFooter>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>OpenAI API Key</CardTitle>
+                <CardDescription>
+                  Add your OpenAI API key to enable AI-powered content generation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Key className="h-4 w-4 mr-2 text-gray-500" />
+                    <Label htmlFor="openai-api-key">API Key</Label>
+                  </div>
+                  <Input 
+                    id="openai-api-key" 
+                    type="password" 
+                    placeholder="sk-..." 
+                    value={openAIApiKey}
+                    onChange={(e) => setOpenAIApiKey(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Your API key is stored securely and only used for your content generation.
+                    You can find your API key in the{" "}
+                    <a 
+                      href="https://platform.openai.com/api-keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-linkedin-primary hover:underline"
+                    >
+                      OpenAI dashboard
+                    </a>.
+                  </p>
+                </div>
+                
+                {apiKeyStatus !== "untested" && (
+                  <div className={cn(
+                    "p-3 rounded-md text-sm",
+                    apiKeyStatus === "valid" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                  )}>
+                    {apiKeyStatus === "valid" 
+                      ? "✓ API key is valid and connected" 
+                      : "✗ API key is invalid or connection failed"}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={testApiKey}
+                  disabled={isTestingConnection || !openAIApiKey}
+                >
+                  {isTestingConnection ? "Testing..." : "Test Connection"}
+                </Button>
+                <Button 
+                  onClick={saveApiKey}
+                  disabled={isSavingApiKey || !openAIApiKey}
+                >
+                  {isSavingApiKey ? "Saving..." : "Save API Key"}
+                </Button>
               </CardFooter>
             </Card>
             

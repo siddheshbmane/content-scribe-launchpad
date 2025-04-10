@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,17 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   apiKey,
   onApiKeyChange
 }) => {
+  const [savedApiKey, setSavedApiKey] = useState("");
+  
+  // Load API key from localStorage on component mount
+  useEffect(() => {
+    const storedApiKey = localStorage.getItem("openAIApiKey");
+    if (storedApiKey && storedApiKey !== apiKey) {
+      setSavedApiKey(storedApiKey);
+      onApiKeyChange(storedApiKey);
+    }
+  }, [apiKey, onApiKeyChange]);
+  
   return (
     <div className="space-y-4">
       <Select value={value} onValueChange={onChange}>
@@ -57,12 +68,13 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           <Input
             id="apiKey"
             type="password"
-            placeholder="sk-..."
+            placeholder={savedApiKey ? "API key loaded from settings" : "sk-..."}
             value={apiKey}
             onChange={(e) => onApiKeyChange(e.target.value)}
           />
           <p className="text-xs text-gray-500">
             Your API key is stored securely and used only for your content generation requests.
+            {savedApiKey && " Your saved API key has been loaded from settings."}
           </p>
         </div>
       )}
