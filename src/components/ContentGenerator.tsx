@@ -18,20 +18,87 @@ import ModelSelector from "./ModelSelector";
 
 interface ContentGeneratorProps {
   onClose: () => void;
+  initialTopic?: string;
+  initialType?: "single" | "calendar";
 }
 
-const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
-  const [topic, setTopic] = useState("");
+const ContentGenerator: React.FC<ContentGeneratorProps> = ({ 
+  onClose, 
+  initialTopic = "", 
+  initialType = "single"
+}) => {
+  const [topic, setTopic] = useState(initialTopic);
   const [tone, setTone] = useState("professional");
   const [model, setModel] = useState("gpt3.5");
   const [apiKey, setApiKey] = useState("");
-  const [contentType, setContentType] = useState("single");
+  const [contentType, setContentType] = useState(initialType);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [generatedCalendar, setGeneratedCalendar] = useState<Array<{title: string, content: string}>>([]);
   const [activeTab, setActiveTab] = useState("generate");
+  const [imageGenerating, setImageGenerating] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { canUseCustomApiKey, canCreateMorePosts, setPostsCreated, userPlan } = usePlan();
+
+  const generateTitle = (input: string) => {
+    const titles = [
+      `The Ultimate Guide to ${input}`,
+      `5 Ways to Master ${input} in 2025`,
+      `Why ${input} Is Critical for Your Career Growth`,
+      `${input}: What I Wish I Knew When Starting Out`,
+      `How to Leverage ${input} for Professional Success`
+    ];
+    return titles[Math.floor(Math.random() * titles.length)];
+  };
+
+  const generateCalendarContent = async (topic: string) => {
+    // Generate 30 unique posts for a content calendar
+    const posts = [];
+    
+    // Template structures for variety
+    const templates = [
+      `# ${generateTitle(topic)}\n\nLooking to improve your ${topic} skills? Here's what most people get wrong...\n\nThe secret isn't working harder, it's about working smarter.\n\nI've helped over 100 professionals master ${topic} using these simple techniques:\n\n- Start with the end goal in mind\n- Break down complex problems into manageable steps\n- Measure progress consistently\n\nWant to learn more? Check out my free guide in the comments! 💡\n\n#${topic.replace(/\s+/g, '')} #CareerGrowth #ProfessionalTips`,
+      
+      `# ${generateTitle(topic)}\n\nDid you know that LinkedIn posts with personal stories get 3x more engagement than purely promotional content?\n\nHere's what I've learned about ${topic} after 5 years in the industry:\n\n1️⃣ The fundamentals never change - focus on providing value first\n2️⃣ Building relationships matters more than vanity metrics\n3️⃣ Consistency beats perfection every single time\n\nWhat's been your experience with ${topic}? Share in the comments below! 👇\n\n#ProfessionalDevelopment #${topic.replace(/\s+/g, '')} #LinkedInTips`,
+      
+      `# ${generateTitle(topic)}\n\n"The best investment you can make is in yourself" - Warren Buffett\n\nThis quote completely changed how I approach ${topic}.\n\nInstead of looking for quick wins, I started focusing on:\n\n• Continuous learning\n• Building relationships with industry leaders\n• Practicing ${topic} daily, even when it's difficult\n\nThe results? My ${topic} skills have improved 10x in just 6 months.\n\nAre you investing in yourself? 🤔\n\n#${topic.replace(/\s+/g, '')} #SelfImprovement #ProfessionalGrowth`,
+      
+      `# ${generateTitle(topic)}\n\nI made a huge mistake with ${topic} last year that cost me a major opportunity.\n\nHere's what happened 👇\n\nI assumed that ${topic} was just about technical skills. But I was wrong.\n\nThe psychological aspects are equally important:\n\n• Mindset matters more than tactics\n• Consistency trumps intensity\n• Community support accelerates growth\n\nDon't make the same mistake I did!\n\n#Lessons #${topic.replace(/\s+/g, '')} #CareerAdvice`,
+      
+      `# ${generateTitle(topic)}\n\nThe ${topic} framework that transformed my career:\n\n1. Identify your unique value proposition\n2. Build a consistent content strategy\n3. Engage authentically with your network\n4. Measure results and adjust accordingly\n5. Repeat daily for 90 days\n\nThis simple process helped me land 3 dream clients and grow my ${topic} skills exponentially.\n\nWhich step do you struggle with most? Comment below!\n\n#${topic.replace(/\s+/g, '')} #CareerStrategy #LinkedInTips`
+    ];
+    
+    // Generate 30 days of content using the templates
+    for (let i = 0; i < 30; i++) {
+      const templateIndex = i % templates.length;
+      
+      // Add small variations to make each post unique
+      const variations = [
+        `Recently`, `This month`, `Last week`, `Just yesterday`,
+        `For the past year`, `Throughout my career`,
+        `In my experience`, `According to research`,
+        `As I've discovered`, `What I've found is that`
+      ];
+      
+      let content = templates[templateIndex];
+      
+      // Add a unique modifier based on day number
+      const dayModifier = variations[i % variations.length];
+      content = content.replace(`Here's what`, `${dayModifier}, here's what`);
+      
+      // Add unique title by adding day number
+      const title = generateTitle(`${topic} - Part ${i+1}`);
+      
+      posts.push({
+        title,
+        content
+      });
+    }
+    
+    return posts;
+  };
 
   const handleGenerate = async () => {
     if (!topic) {
@@ -54,24 +121,42 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
 
     setIsGenerating(true);
     setGeneratedContent(null);
+    setGeneratedCalendar([]);
 
     try {
-      // Simulate API call to OpenAI
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      // In a real implementation, this would call the OpenAI API
+      // Using stored API key from localStorage if available
+      const storedApiKey = localStorage.getItem("openAIApiKey") || apiKey;
       
-      // Placeholder content
-      let content;
       if (contentType === "single") {
-        content = `# ${generateTitle(topic)}\n\nDid you know that LinkedIn posts with personal stories get 3x more engagement than purely promotional content?\n\nHere's what I've learned about ${topic} after 5 years in the industry:\n\n1️⃣ The fundamentals never change - focus on providing value first\n2️⃣ Building relationships matters more than vanity metrics\n3️⃣ Consistency beats perfection every single time\n\nWhat's been your experience with ${topic}? Share in the comments below! 👇\n\n#ProfessionalDevelopment #${topic.replace(/\s+/g, '')} #LinkedInTips`;
+        // Simulate API call to OpenAI
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
+        // Placeholder content - in a real implementation this would use the OpenAI API
+        const content = `# ${generateTitle(topic)}\n\nDid you know that LinkedIn posts with personal stories get 3x more engagement than purely promotional content?\n\nHere's what I've learned about ${topic} after 5 years in the industry:\n\n1️⃣ The fundamentals never change - focus on providing value first\n2️⃣ Building relationships matters more than vanity metrics\n3️⃣ Consistency beats perfection every single time\n\nWhat's been your experience with ${topic}? Share in the comments below! 👇\n\n#ProfessionalDevelopment #${topic.replace(/\s+/g, '')} #LinkedInTips`;
+        
+        setGeneratedContent(content);
+        
+        // Increment posts created count
+        if (userPlan) {
+          setPostsCreated(userPlan.postsCreated + 1);
+        }
       } else {
-        content = Array.from({ length: 5 }, (_, i) => `# Post ${i + 1}: ${generateTitle(topic)}\n\nLooking to improve your ${topic} skills? Here's what most people get wrong...\n\nThe secret isn't working harder, it's about working smarter.\n\nI've helped over 100 professionals master ${topic} using these simple techniques:\n\n- Start with the end goal in mind\n- Break down complex problems into manageable steps\n- Measure progress consistently\n\nWant to learn more? Check out my free guide in the comments! 💡\n\n#${topic.replace(/\s+/g, '')} #CareerGrowth #ProfessionalTips`).join('\n\n\n');
-      }
-      
-      setGeneratedContent(content);
-      
-      // Increment posts created count
-      if (userPlan) {
-        setPostsCreated(userPlan.postsCreated + 1);
+        // Generate content calendar
+        await new Promise(resolve => setTimeout(resolve, 3500));
+        
+        // Generate 30 unique posts for the calendar
+        const calendarPosts = await generateCalendarContent(topic);
+        setGeneratedCalendar(calendarPosts);
+        
+        // Join all posts together for compatibility with existing code
+        const allPostsContent = calendarPosts.map(post => post.content).join('\n\n\n');
+        setGeneratedContent(allPostsContent);
+        
+        // Increment posts created count (counts as one creation even though it's multiple posts)
+        if (userPlan) {
+          setPostsCreated(userPlan.postsCreated + 1);
+        }
       }
       
       setActiveTab("preview");
@@ -91,17 +176,6 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
     }
   };
 
-  const generateTitle = (input: string) => {
-    const titles = [
-      `The Ultimate Guide to ${input}`,
-      `5 Ways to Master ${input} in 2025`,
-      `Why ${input} Is Critical for Your Career Growth`,
-      `${input}: What I Wish I Knew When Starting Out`,
-      `How to Leverage ${input} for Professional Success`
-    ];
-    return titles[Math.floor(Math.random() * titles.length)];
-  };
-
   const handleCopy = () => {
     if (generatedContent) {
       navigator.clipboard.writeText(generatedContent);
@@ -110,6 +184,88 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
         description: "Your generated content has been copied to your clipboard.",
       });
     }
+  };
+
+  const handleGenerateImage = async () => {
+    setImageGenerating(true);
+    
+    try {
+      // Simulate image generation API call
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // In a real implementation, this would call an image generation API
+      // For now, just use a placeholder image
+      setGeneratedImage("https://placehold.co/600x400/EEE/31343C?text=AI+Generated+Image+for+" + encodeURIComponent(topic));
+      
+      toast({
+        title: "Image generated",
+        description: "Your image has been generated successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Image generation failed",
+        description: "There was an error generating your image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setImageGenerating(false);
+    }
+  };
+
+  const handleSaveAsDraft = () => {
+    if (!generatedContent) return;
+    
+    // Get existing drafts or initialize empty array
+    const existingDrafts = JSON.parse(localStorage.getItem('contentDrafts') || '[]');
+    
+    // Create new draft
+    const newDraft = {
+      id: Date.now().toString(),
+      title: topic ? generateTitle(topic) : "Untitled Draft",
+      content: generatedContent,
+      date: new Date().toISOString(),
+      status: "draft"
+    };
+    
+    // Add to drafts and save
+    localStorage.setItem('contentDrafts', JSON.stringify([newDraft, ...existingDrafts]));
+    
+    toast({
+      title: "Saved as draft",
+      description: "Your content has been saved as a draft!",
+    });
+    
+    onClose();
+  };
+
+  const handleSchedulePost = () => {
+    if (!generatedContent) return;
+    
+    // Get existing posts or initialize empty array
+    const existingPosts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+    
+    // Schedule date (default to tomorrow)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Create new scheduled post
+    const newPost = {
+      id: Date.now().toString(),
+      title: topic ? generateTitle(topic) : "Scheduled Post",
+      content: generatedContent,
+      date: tomorrow.toISOString(),
+      status: "scheduled"
+    };
+    
+    // Add to scheduled posts and save
+    localStorage.setItem('scheduledPosts', JSON.stringify([newPost, ...existingPosts]));
+    
+    toast({
+      title: "Post scheduled",
+      description: "Your content has been scheduled for tomorrow!",
+    });
+    
+    onClose();
   };
 
   const formatContent = (content: string) => {
@@ -187,7 +343,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
               
               <div className="space-y-2">
                 <Label>Content Type</Label>
-                <RadioGroup defaultValue="single" value={contentType} onValueChange={setContentType} className="flex flex-col space-y-1">
+                <RadioGroup defaultValue="single" value={contentType} onValueChange={(value) => setContentType(value as "single" | "calendar")} className="flex flex-col space-y-1">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="single" id="single" />
                     <Label htmlFor="single" className="cursor-pointer">Single Post</Label>
@@ -297,10 +453,34 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
                       <p className="text-sm text-gray-600">Create carousel images for your post</p>
                     </div>
                   </div>
-                  <Button size="sm">
-                    Generate Images
+                  <Button 
+                    size="sm" 
+                    onClick={handleGenerateImage}
+                    disabled={imageGenerating}
+                  >
+                    {imageGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      "Generate Images"
+                    )}
                   </Button>
                 </div>
+                
+                {generatedImage && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Generated Image</h4>
+                    <div className="bg-white p-2 border rounded-lg">
+                      <img 
+                        src={generatedImage} 
+                        alt="AI generated" 
+                        className="w-full h-auto rounded"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -310,10 +490,10 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({ onClose }) => {
               Close
             </Button>
             <div className="flex space-x-2">
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleSaveAsDraft}>
                 Save as Draft
               </Button>
-              <Button>
+              <Button onClick={handleSchedulePost}>
                 <Calendar className="mr-2 h-4 w-4" />
                 Schedule Post
               </Button>

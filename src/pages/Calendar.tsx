@@ -1,15 +1,16 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { usePlan } from "@/contexts/PlanContext";
-import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Eye, Edit, Trash2, Copy } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Eye, Edit, Trash2, Copy, Loader2 } from "lucide-react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import ContentGenerator from "@/components/ContentGenerator";
 
 interface Post {
   id: string;
@@ -22,39 +23,34 @@ interface Post {
 const Calendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: "1",
-      title: "5 Trends Reshaping the Tech Industry",
-      content: "Content here...",
-      date: "2025-04-12",
-      status: "scheduled",
-    },
-    {
-      id: "2",
-      title: "My Journey to Becoming a Tech Leader",
-      content: "Content here...",
-      date: "2025-04-15",
-      status: "draft",
-    },
-    {
-      id: "3",
-      title: "How to Build a Personal Brand on LinkedIn",
-      content: "Content here...",
-      date: "2025-04-20",
-      status: "scheduled",
-    },
-    {
-      id: "4",
-      title: "The Future of Remote Work",
-      content: "Content here...",
-      date: "2025-04-05",
-      status: "published",
-    },
-  ]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [showGenerator, setShowGenerator] = useState(false);
+  const [isAddingPost, setIsAddingPost] = useState(false);
+  const [newPostTitle, setNewPostTitle] = useState("");
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const { canAccessCalendar } = usePlan();
   const { toast } = useToast();
+
+  // Load posts from localStorage on mount
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = () => {
+    // Load drafts
+    const drafts = JSON.parse(localStorage.getItem('contentDrafts') || '[]');
+    
+    // Load scheduled posts
+    const scheduled = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+    
+    // Load published posts
+    const published = JSON.parse(localStorage.getItem('publishedPosts') || '[]');
+    
+    // Combine all posts
+    const combined = [...drafts, ...scheduled, ...published];
+    setPosts(combined);
+  };
 
   if (!canAccessCalendar) {
     return (
@@ -70,6 +66,80 @@ const Calendar = () => {
       </DashboardLayout>
     );
   }
+
+  const handleAddPost = (date: Date) => {
+    setSelectedDate(format(date, "yyyy-MM-dd"));
+    setShowGenerator(true);
+  };
+
+  const handleCloseGenerator = () => {
+    setShowGenerator(false);
+    loadPosts(); // Reload posts after generator closes
+  };
+
+  const handleDeletePost = (postId: string) => {
+    // Find which list the post is in
+    const draft = JSON.parse(localStorage.getItem('contentDrafts') || '[]')
+      .filter((p: Post) => p.id !== postId);
+    
+    const scheduled = JSON.parse(localStorage.getItem('scheduledPosts') || '[]')
+      .filter((p: Post) => p.id !== postId);
+    
+    const published = JSON.parse(localStorage.getItem('publishedPosts') || '[]')
+      .filter((p: Post) => p.id !== postId);
+    
+    // Update localStorage
+    localStorage.setItem('contentDrafts', JSON.stringify(draft));
+    localStorage.setItem('scheduledPosts', JSON.stringify(scheduled));
+    localStorage.setItem('publishedPosts', JSON.stringify(published));
+    
+    // Update state
+    const updatedPosts = posts.filter(post => post.id !== postId);
+    setPosts(updatedPosts);
+    
+    toast({
+      title: "Post Deleted",
+      description: "The post has been deleted successfully.",
+    });
+  };
+
+  const handleEditPost = (post: Post) => {
+    toast({
+      title: "Edit Post",
+      description: `Editing post: ${post.title}`,
+    });
+    // In a real app, we would open the post editor with this post loaded
+  };
+
+  const handleDuplicatePost = (post: Post) => {
+    const newPost = {
+      ...post,
+      id: Date.now().toString(),
+      title: `${post.title} (Copy)`,
+    };
+
+    const list = post.status === 'draft' ? 'contentDrafts' : 
+                post.status === 'scheduled' ? 'scheduledPosts' : 'publishedPosts';
+    
+    const items = JSON.parse(localStorage.getItem(list) || '[]');
+    items.push(newPost);
+    localStorage.setItem(list, JSON.stringify(items));
+    
+    loadPosts();
+    
+    toast({
+      title: "Post Duplicated",
+      description: "The post has been duplicated successfully.",
+    });
+  };
+
+  const handlePreviewPost = (post: Post) => {
+    toast({
+      title: "Preview Post",
+      description: `Previewing post: ${post.title}`,
+    });
+    // In a real app, we would show a preview modal
+  };
 
   const renderHeader = () => {
     return (
@@ -90,7 +160,7 @@ const Calendar = () => {
           <Button variant="outline" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button>
+          <Button onClick={() => handleAddPost(new Date())}>
             <Plus className="mr-2 h-4 w-4" />
             New Post
           </Button>
@@ -150,7 +220,7 @@ const Calendar = () => {
       <div className="grid grid-cols-7 gap-0 border rounded-lg overflow-hidden bg-white">
         {totalCells.map((day, i) => {
           const formattedDate = day ? format(day, "yyyy-MM-dd") : "";
-          const dayPosts = posts.filter(post => post.date === formattedDate);
+          const dayPosts = posts.filter(post => post.date.substring(0, 10) === formattedDate);
           
           return (
             <div
@@ -174,8 +244,16 @@ const Calendar = () => {
                       {format(day, "d")}
                     </span>
                     
-                    {dayPosts.length > 0 && (
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-500">
+                    {day && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-gray-500"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddPost(day);
+                        }}
+                      >
                         <Plus className="h-3 w-3" />
                       </Button>
                     )}
@@ -194,22 +272,22 @@ const Calendar = () => {
                       >
                         <span className="truncate flex-1">{post.title}</span>
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon" className="h-4 w-4 opacity-50 hover:opacity-100">
                               <MoreHorizontal className="h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem className="flex items-center">
+                            <DropdownMenuItem className="flex items-center" onClick={() => handlePreviewPost(post)}>
                               <Eye className="h-4 w-4 mr-2" /> Preview
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center">
+                            <DropdownMenuItem className="flex items-center" onClick={() => handleEditPost(post)}>
                               <Edit className="h-4 w-4 mr-2" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center">
+                            <DropdownMenuItem className="flex items-center" onClick={() => handleDuplicatePost(post)}>
                               <Copy className="h-4 w-4 mr-2" /> Duplicate
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center text-red-600">
+                            <DropdownMenuItem className="flex items-center text-red-600" onClick={() => handleDeletePost(post.id)}>
                               <Trash2 className="h-4 w-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -223,6 +301,10 @@ const Calendar = () => {
                           variant="ghost" 
                           size="sm" 
                           className="h-6 text-xs text-gray-400 hover:text-gray-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddPost(day);
+                          }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
                           Add
@@ -243,7 +325,7 @@ const Calendar = () => {
     if (!selectedDay) return null;
     
     const formattedDate = format(selectedDay, "yyyy-MM-dd");
-    const dayPosts = posts.filter(post => post.date === formattedDate);
+    const dayPosts = posts.filter(post => post.date.substring(0, 10) === formattedDate);
     
     return (
       <Card className="mt-6">
@@ -252,7 +334,7 @@ const Calendar = () => {
             <h3 className="text-lg font-semibold">
               Posts for {format(selectedDay, "MMMM d, yyyy")}
             </h3>
-            <Button size="sm">
+            <Button size="sm" onClick={() => handleAddPost(selectedDay)}>
               <Plus className="h-4 w-4 mr-2" />
               Add Post
             </Button>
@@ -262,7 +344,14 @@ const Calendar = () => {
             <div className="text-center py-10">
               <CalendarIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500">No posts scheduled for this day</p>
-              <Button variant="outline" className="mt-4">
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => {
+                  setSelectedDate(formattedDate);
+                  setShowGenerator(true);
+                }}
+              >
                 <Sparkles className="h-4 w-4 mr-2" />
                 Generate Content
               </Button>
@@ -291,11 +380,29 @@ const Calendar = () => {
                       <h4 className="font-medium">{post.title}</h4>
                     </div>
                     <div className="flex space-x-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handlePreviewPost(post)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8"
+                        onClick={() => handleEditPost(post)}
+                      >
                         <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-600"
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -310,13 +417,20 @@ const Calendar = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4">
-        {renderHeader()}
-        {renderMonthLabel()}
-        {renderDaysOfWeek()}
-        {renderCells()}
-        {renderEvents()}
-      </div>
+      {showGenerator ? (
+        <ContentGenerator 
+          onClose={handleCloseGenerator}
+          initialType="single"
+        />
+      ) : (
+        <div className="space-y-4">
+          {renderHeader()}
+          {renderMonthLabel()}
+          {renderDaysOfWeek()}
+          {renderCells()}
+          {renderEvents()}
+        </div>
+      )}
     </DashboardLayout>
   );
 };

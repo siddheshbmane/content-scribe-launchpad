@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 
 export type PlanType = "free" | "pro" | "proPlus";
@@ -79,44 +79,46 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadUserPlan = async () => {
-      setIsLoading(true);
-      
-      if (!user) {
-        setUserPlan(null);
-        setIsLoading(false);
-        return;
-      }
-      
-      try {
-        // In a real app, this would be fetched from the backend
-        // For MVP, we'll use localStorage with initial mock data
-        const storedPlan = localStorage.getItem(`userPlan_${user.id}`);
-        
-        if (storedPlan) {
-          setUserPlan(JSON.parse(storedPlan));
-        } else {
-          // Default plan for new users
-          const defaultPlan: UserPlan = {
-            planType: "free",
-            postsCreated: 0,
-            postsLimit: PLAN_DETAILS.free.postsPerMonth,
-            isImageGeneratorEnabled: PLAN_DETAILS.free.hasImageGenerator
-          };
-          
-          setUserPlan(defaultPlan);
-          localStorage.setItem(`userPlan_${user.id}`, JSON.stringify(defaultPlan));
-        }
-      } catch (error) {
-        console.error("Failed to load user plan:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Function to load user plan from localStorage
+  const loadUserPlan = useCallback(async () => {
+    setIsLoading(true);
     
-    loadUserPlan();
+    if (!user) {
+      setUserPlan(null);
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      // In a real app, this would be fetched from the backend
+      // For MVP, we'll use localStorage with initial mock data
+      const storedPlan = localStorage.getItem(`userPlan_${user.id}`);
+      
+      if (storedPlan) {
+        setUserPlan(JSON.parse(storedPlan));
+      } else {
+        // Default plan for new users
+        const defaultPlan: UserPlan = {
+          planType: "free",
+          postsCreated: 0,
+          postsLimit: PLAN_DETAILS.free.postsPerMonth,
+          isImageGeneratorEnabled: PLAN_DETAILS.free.hasImageGenerator
+        };
+        
+        setUserPlan(defaultPlan);
+        localStorage.setItem(`userPlan_${user.id}`, JSON.stringify(defaultPlan));
+      }
+    } catch (error) {
+      console.error("Failed to load user plan:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
+
+  // Initialize user plan on component mount or when user changes
+  useEffect(() => {
+    loadUserPlan();
+  }, [user, loadUserPlan]);
 
   const upgradePlan = async (planType: PlanType): Promise<void> => {
     if (!user) return;
@@ -157,10 +159,13 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Derived state for feature access
   const canGenerateImage = userPlan?.isImageGeneratorEnabled || false;
-  const canCreateMorePosts = userPlan ? userPlan.postsCreated < userPlan.postsLimit : false;
+  const canCreateMorePosts = userPlan ? (
+    userPlan.planType === "proPlus" || userPlan.postsCreated < userPlan.postsLimit
+  ) : false;
   const canAccessCalendar = userPlan ? PLAN_DETAILS[userPlan.planType].hasCalendarAccess : false;
   const canUseCustomApiKey = userPlan ? PLAN_DETAILS[userPlan.planType].canUseOwnApiKey : false;
-  const remainingPosts = userPlan ? userPlan.postsLimit - userPlan.postsCreated : 0;
+  const remainingPosts = userPlan ? 
+    (userPlan.planType === "proPlus" ? 999 : Math.max(0, userPlan.postsLimit - userPlan.postsCreated)) : 0;
 
   return (
     <PlanContext.Provider

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,9 @@ import {
   Image as ImageIcon,
   Clock,
   Plus,
-  Calendar 
+  Calendar,
+  Eye,
+  Trash2
 } from "lucide-react";
 import { 
   Select, 
@@ -29,6 +31,15 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import ContentGenerator from "@/components/ContentGenerator";
+import { format } from "date-fns";
+
+interface Post {
+  id: string;
+  title: string;
+  date: string;
+  status: "draft" | "scheduled" | "published";
+  content?: string;
+}
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -37,6 +48,41 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [generatorTopic, setGeneratorTopic] = useState("");
+  const [generatorType, setGeneratorType] = useState<"single" | "calendar">("single");
+
+  // Load posts from localStorage
+  useEffect(() => {
+    // Load drafts
+    const drafts = JSON.parse(localStorage.getItem('contentDrafts') || '[]');
+    
+    // Load scheduled posts
+    const scheduled = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
+    
+    // Load published posts
+    const published = JSON.parse(localStorage.getItem('publishedPosts') || '[]');
+    
+    // Combine all posts
+    const combined = [...drafts, ...scheduled, ...published];
+    
+    // Sort by date (newest first)
+    combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    setAllPosts(combined);
+    setFilteredPosts(combined);
+  }, []);
+
+  // Apply filter when statusFilter changes
+  useEffect(() => {
+    if (statusFilter === "all") {
+      setFilteredPosts(allPosts);
+    } else {
+      setFilteredPosts(allPosts.filter(post => post.status === statusFilter));
+    }
+  }, [statusFilter, allPosts]);
 
   const handleCreateCalendar = () => {
     if (canAccessCalendar) {
@@ -50,7 +96,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleQuickGenerate = () => {
+  const handleQuickGenerate = (topic?: string) => {
     if (remainingPosts <= 0) {
       toast({
         title: "Post Limit Reached",
@@ -60,7 +106,105 @@ const Dashboard = () => {
       return;
     }
 
+    // Set topic if provided
+    if (topic) {
+      setGeneratorTopic(topic);
+    } else {
+      setGeneratorTopic("");
+    }
+
+    setGeneratorType("single");
     setShowGenerator(true);
+  };
+
+  const handleEditPost = (post: Post) => {
+    // Implement post editing
+    toast({
+      title: "Edit Post",
+      description: `Editing post: ${post.title}`,
+    });
+
+    // In a real app, we would open the post editor with this post loaded
+  };
+
+  const handlePreviewPost = (post: Post) => {
+    // Implement post preview
+    toast({
+      title: "Preview Post",
+      description: `Previewing post: ${post.title}`,
+    });
+
+    // In a real app, we would show a preview modal
+  };
+
+  const handleDeletePost = (postId: string) => {
+    // Find which list the post is in
+    const draft = JSON.parse(localStorage.getItem('contentDrafts') || '[]')
+      .filter((p: Post) => p.id !== postId);
+    
+    const scheduled = JSON.parse(localStorage.getItem('scheduledPosts') || '[]')
+      .filter((p: Post) => p.id !== postId);
+    
+    const published = JSON.parse(localStorage.getItem('publishedPosts') || '[]')
+      .filter((p: Post) => p.id !== postId);
+    
+    // Update localStorage
+    localStorage.setItem('contentDrafts', JSON.stringify(draft));
+    localStorage.setItem('scheduledPosts', JSON.stringify(scheduled));
+    localStorage.setItem('publishedPosts', JSON.stringify(published));
+    
+    // Update state
+    const updatedPosts = allPosts.filter(post => post.id !== postId);
+    setAllPosts(updatedPosts);
+    
+    toast({
+      title: "Post Deleted",
+      description: "The post has been deleted successfully.",
+    });
+  };
+
+  const handleSchedulePost = (post: Post) => {
+    // Implement post scheduling
+    toast({
+      title: "Schedule Post",
+      description: `Scheduling post: ${post.title}`,
+    });
+
+    // In a real app, we would open a scheduling dialog
+  };
+
+  const handleFilterChange = (value: string) => {
+    setStatusFilter(value);
+  };
+
+  const handleViewAllPosts = () => {
+    // In a real app, this would navigate to a dedicated posts page
+    toast({
+      title: "View All Posts",
+      description: "Viewing all posts",
+    });
+  };
+
+  const handleInsightGeneration = (insightType: string) => {
+    let topic = "";
+    switch (insightType) {
+      case "industry":
+        topic = "Industry Insights";
+        break;
+      case "career":
+        topic = "Career Story";
+        break;
+      case "howto":
+        topic = "How-To Guide";
+        break;
+      case "daylife":
+        topic = "Day in the Life";
+        break;
+      default:
+        topic = "";
+    }
+    
+    handleQuickGenerate(topic);
   };
 
   const stats = [
@@ -84,26 +228,8 @@ const Dashboard = () => {
     },
   ];
 
-  const recentPosts = [
-    {
-      id: 1,
-      title: "5 Strategies to Improve Your LinkedIn Engagement",
-      date: "2025-04-15",
-      status: "scheduled",
-    },
-    {
-      id: 2,
-      title: "How I Grew My Network by 500% in 3 Months",
-      date: "2025-04-08",
-      status: "published",
-    },
-    {
-      id: 3,
-      title: "The Future of Remote Work: Trends to Watch",
-      date: "2025-04-01",
-      status: "draft",
-    },
-  ];
+  // Get recent posts (up to 3)
+  const recentPosts = filteredPosts.slice(0, 3);
 
   return (
     <DashboardLayout>
@@ -117,7 +243,7 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={handleQuickGenerate}>
+            <Button variant="outline" onClick={() => handleQuickGenerate()}>
               <Plus className="mr-2 h-4 w-4" />
               Quick Post
             </Button>
@@ -146,7 +272,11 @@ const Dashboard = () => {
         </div>
 
         {showGenerator ? (
-          <ContentGenerator onClose={() => setShowGenerator(false)} />
+          <ContentGenerator 
+            onClose={() => setShowGenerator(false)} 
+            initialTopic={generatorTopic}
+            initialType={generatorType}
+          />
         ) : (
           <>
             {/* Content Tabs */}
@@ -157,7 +287,7 @@ const Dashboard = () => {
                   <TabsTrigger value="popular">Popular Ideas</TabsTrigger>
                 </TabsList>
                 
-                <Select>
+                <Select value={statusFilter} onValueChange={handleFilterChange}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
@@ -171,54 +301,69 @@ const Dashboard = () => {
               </div>
               
               <TabsContent value="recent" className="space-y-4 mt-6">
-                {recentPosts.map((post) => (
-                  <Card key={post.id} className="overflow-hidden transition-all hover:shadow-md">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="p-6 flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <span 
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              post.status === 'published' ? 'bg-green-100 text-green-800' :
-                              post.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}
-                          >
-                            {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                          </span>
-                          <span className="text-sm text-gray-500 flex items-center">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {post.date}
-                          </span>
-                        </div>
-                        
-                        <h3 className="font-medium text-lg">{post.title}</h3>
-                        
-                        <div className="flex space-x-2 mt-4">
-                          <Button variant="outline" size="sm">
-                            Edit
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            Preview
-                          </Button>
-                          {post.status !== "published" && (
-                            <Button size="sm">
-                              {post.status === "scheduled" ? "Reschedule" : "Schedule"}
+                {recentPosts.length > 0 ? (
+                  recentPosts.map((post) => (
+                    <Card key={post.id} className="overflow-hidden transition-all hover:shadow-md">
+                      <div className="flex flex-col md:flex-row">
+                        <div className="p-6 flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span 
+                              className={`px-2 py-1 text-xs rounded-full ${
+                                post.status === 'published' ? 'bg-green-100 text-green-800' :
+                                post.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                            </span>
+                            <span className="text-sm text-gray-500 flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {format(new Date(post.date), 'yyyy-MM-dd')}
+                            </span>
+                          </div>
+                          
+                          <h3 className="font-medium text-lg">{post.title}</h3>
+                          
+                          <div className="flex space-x-2 mt-4">
+                            <Button variant="outline" size="sm" onClick={() => handleEditPost(post)}>
+                              Edit
                             </Button>
-                          )}
+                            <Button variant="outline" size="sm" onClick={() => handlePreviewPost(post)}>
+                              Preview
+                            </Button>
+                            {post.status !== "published" && (
+                              <Button size="sm" onClick={() => handleSchedulePost(post)}>
+                                {post.status === "scheduled" ? "Reschedule" : "Schedule"}
+                              </Button>
+                            )}
+                            <Button variant="outline" size="sm" className="text-red-600" onClick={() => handleDeletePost(post.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-100 md:w-48 p-6 flex flex-col justify-center items-center">
+                          <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
+                          <span className="text-sm text-gray-500">Preview Image</span>
                         </div>
                       </div>
-                      
-                      <div className="bg-gray-100 md:w-48 p-6 flex flex-col justify-center items-center">
-                        <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                        <span className="text-sm text-gray-500">Preview Image</span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">No posts to display. Create your first post!</p>
+                    <Button className="mt-4" onClick={() => setShowGenerator(true)}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Create Your First Post
+                    </Button>
+                  </div>
+                )}
                 
-                <Button variant="outline" className="w-full">
-                  View All Posts <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
+                {filteredPosts.length > 3 && (
+                  <Button variant="outline" className="w-full" onClick={handleViewAllPosts}>
+                    View All Posts <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                )}
               </TabsContent>
               
               <TabsContent value="popular" className="space-y-4 mt-6">
@@ -233,7 +378,7 @@ const Dashboard = () => {
                     <Button
                       variant="outline"
                       className="h-auto p-4 justify-start flex-col items-start text-left space-y-2"
-                      onClick={handleQuickGenerate}
+                      onClick={() => handleInsightGeneration("industry")}
                     >
                       <div className="flex items-center w-full">
                         <span className="bg-linkedin-light p-2 rounded-full">
@@ -249,7 +394,7 @@ const Dashboard = () => {
                     <Button
                       variant="outline"
                       className="h-auto p-4 justify-start flex-col items-start text-left space-y-2"
-                      onClick={handleQuickGenerate}
+                      onClick={() => handleInsightGeneration("career")}
                     >
                       <div className="flex items-center w-full">
                         <span className="bg-linkedin-light p-2 rounded-full">
@@ -265,7 +410,7 @@ const Dashboard = () => {
                     <Button
                       variant="outline"
                       className="h-auto p-4 justify-start flex-col items-start text-left space-y-2"
-                      onClick={handleQuickGenerate}
+                      onClick={() => handleInsightGeneration("howto")}
                     >
                       <div className="flex items-center w-full">
                         <span className="bg-linkedin-light p-2 rounded-full">
@@ -281,7 +426,7 @@ const Dashboard = () => {
                     <Button
                       variant="outline" 
                       className="h-auto p-4 justify-start flex-col items-start text-left space-y-2"
-                      onClick={handleQuickGenerate}
+                      onClick={() => handleInsightGeneration("daylife")}
                     >
                       <div className="flex items-center w-full">
                         <span className="bg-linkedin-light p-2 rounded-full">

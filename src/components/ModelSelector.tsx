@@ -31,6 +31,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       onApiKeyChange(storedApiKey);
     }
   }, [apiKey, onApiKeyChange]);
+
+  // Save API key to localStorage when it changes
+  const handleApiKeyChange = (value: string) => {
+    onApiKeyChange(value);
+    if (value) {
+      localStorage.setItem("openAIApiKey", value);
+      setSavedApiKey(value);
+    }
+  };
   
   return (
     <div className="space-y-4">
@@ -70,7 +79,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
             type="password"
             placeholder={savedApiKey ? "API key loaded from settings" : "sk-..."}
             value={apiKey}
-            onChange={(e) => onApiKeyChange(e.target.value)}
+            onChange={(e) => handleApiKeyChange(e.target.value)}
           />
           <p className="text-xs text-gray-500">
             Your API key is stored securely and used only for your content generation requests.
