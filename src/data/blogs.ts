@@ -21,7 +21,7 @@ export interface BlogPost {
 }
 
 // Categories for blog posts
-const categories = [
+export const categories = [
   'LinkedIn Strategy',
   'Content Creation',
   'AI Tips',
@@ -33,7 +33,7 @@ const categories = [
 ];
 
 // Tags for blog posts
-const tags = [
+export const tags = [
   'LinkedIn', 'AI', 'Content Marketing', 'Personal Brand', 'Career', 
   'Social Media', 'Professional Growth', 'Networking', 'Thought Leadership', 
   'Content Calendar', 'Engagement', 'Analytics', 'Algorithms', 'Prompts',
