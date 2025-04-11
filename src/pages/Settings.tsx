@@ -13,7 +13,7 @@ import { usePlan, PlanType } from "@/contexts/PlanContext";
 import ApiKeySettings from "@/components/ApiKeySettings";
 
 const Settings = () => {
-  const { plan, setPlan } = usePlan();
+  const { plan, setPlan, hasCustomApiKeys } = usePlan();
   
   const [profile, setProfile] = useState({
     name: "John Doe",
@@ -74,8 +74,8 @@ const Settings = () => {
     });
   };
   
-  const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>, key: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [key]: e.target.checked }));
+  const handleNotificationChange = (checked: boolean, key: keyof typeof notifications) => {
+    setNotifications(prev => ({ ...prev, [key]: checked }));
     toast({
       title: "Notification Preferences Updated",
       description: `Your ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} preference has been updated.`,
@@ -316,7 +316,7 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="api" className="space-y-6">
-            <ApiKeySettings />
+            <ApiKeySettings canUseCustomApiKey={hasCustomApiKeys} />
           </TabsContent>
           
           <TabsContent value="notifications" className="space-y-6">
@@ -331,7 +331,7 @@ const Settings = () => {
                   <Switch
                     id="email-digest"
                     checked={notifications.emailDigest}
-                    onCheckedChange={(checked) => handleNotificationChange(e, 'emailDigest')}
+                    onCheckedChange={(checked) => handleNotificationChange(checked, 'emailDigest')}
                   />
                 </div>
                 <Separator />
@@ -343,7 +343,7 @@ const Settings = () => {
                   <Switch
                     id="content-suggestions"
                     checked={notifications.contentSuggestions}
-                    onCheckedChange={(checked) => handleNotificationChange(e, 'contentSuggestions')}
+                    onCheckedChange={(checked) => handleNotificationChange(checked, 'contentSuggestions')}
                   />
                 </div>
                 <Separator />
@@ -355,7 +355,7 @@ const Settings = () => {
                   <Switch
                     id="account-alerts"
                     checked={notifications.accountAlerts}
-                    onCheckedChange={(checked) => handleNotificationChange(e, 'accountAlerts')}
+                    onCheckedChange={(checked) => handleNotificationChange(checked, 'accountAlerts')}
                   />
                 </div>
               </div>
