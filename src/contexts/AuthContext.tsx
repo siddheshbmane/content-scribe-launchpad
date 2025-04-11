@@ -9,11 +9,6 @@ export interface User {
   email: string;
   profileImage?: string;
   role: "user" | "admin";
-  linkedInProfile?: {
-    id: string;
-    accessToken: string;
-    refreshToken?: string;
-  };
 }
 
 // Define the context type
@@ -62,64 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(JSON.parse(storedUser));
     }
     setIsLoading(false);
-    
-    // Handle LinkedIn OAuth redirect
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    const state = params.get('state');
-    
-    if (code && state && state === localStorage.getItem('linkedin_state')) {
-      handleLinkedInCallback(code);
-    }
   }, []);
-  
-  const handleLinkedInCallback = async (code: string) => {
-    // In a real implementation, we would exchange this code for tokens
-    // For this MVP, we'll simulate a successful LinkedIn login
-    setIsLoading(true);
-    
-    try {
-      // Simulate API call to exchange code for tokens
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For the MVP, create a mock user with LinkedIn profile
-      const mockLinkedInUser = {
-        id: "linkedin-" + Math.random().toString(36).substring(7),
-        name: "LinkedIn User",
-        email: "linkedin@example.com",
-        profileImage: "https://i.pravatar.cc/150?img=3",
-        role: "user" as const,
-        linkedInProfile: {
-          id: "linkedin-id-123",
-          accessToken: "mock-access-token"
-        }
-      };
-      
-      setUser(mockLinkedInUser);
-      localStorage.setItem("user", JSON.stringify(mockLinkedInUser));
-      
-      // Clear the state from localStorage
-      localStorage.removeItem('linkedin_state');
-      
-      // Remove the code and state from the URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      toast.success("Successfully logged in with LinkedIn!");
-      
-      // Check if user has completed onboarding
-      const hasCompletedOnboarding = localStorage.getItem("hasCompletedOnboarding");
-      if (!hasCompletedOnboarding) {
-        window.location.href = '/onboarding';
-      } else {
-        window.location.href = '/dashboard';
-      }
-    } catch (error) {
-      toast.error("LinkedIn login failed");
-      console.error("LinkedIn login error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -139,12 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userWithoutPassword);
       localStorage.setItem("user", JSON.stringify(userWithoutPassword));
       toast.success("Successfully logged in!");
-      
-      // Check if user has completed onboarding
-      const hasCompletedOnboarding = localStorage.getItem("hasCompletedOnboarding");
-      if (!hasCompletedOnboarding) {
-        window.location.href = '/onboarding';
-      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
       throw error;
@@ -154,54 +86,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithLinkedIn = async () => {
+    setIsLoading(true);
     try {
-      // In a real implementation, this would redirect to LinkedIn OAuth
-      // For this MVP, we'll mock the OAuth flow
-      
-      // Generate a random state parameter for security
-      const state = Math.random().toString(36).substring(7);
-      localStorage.setItem('linkedin_state', state);
-      
-      // Mock LinkedIn OAuth URL
-      // In a real implementation, this would be the actual LinkedIn authorization URL
-      const clientId = "77j8dhsapg9bel";
-      const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
-      const scope = encodeURIComponent("r_liteprofile r_emailaddress w_member_social");
-      
-      // This is just for simulation - in a real app, you'd use the LinkedIn API
-      const linkedInAuthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
-      
-      // For the MVP, simulate the redirect and callback
-      toast.info("Simulating LinkedIn OAuth flow...");
+      // Simulate LinkedIn OAuth flow
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Mock user data that would normally come from LinkedIn
-      const mockLinkedInUser = {
-        id: "linkedin-" + Math.random().toString(36).substring(7),
-        name: "LinkedIn User",
-        email: "linkedin@example.com",
-        profileImage: "https://i.pravatar.cc/150?img=3",
-        role: "user" as const,
-        linkedInProfile: {
-          id: "linkedin-id-123",
-          accessToken: "mock-access-token"
-        }
-      };
+      // For the MVP, just log in as the demo user
+      const mockUser = MOCK_USERS[0];
+      const { password: _, ...userWithoutPassword } = mockUser;
       
-      setUser(mockLinkedInUser);
-      localStorage.setItem("user", JSON.stringify(mockLinkedInUser));
+      setUser(userWithoutPassword);
+      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
       toast.success("Successfully logged in with LinkedIn!");
-      
-      // Check if user has completed onboarding
-      const hasCompletedOnboarding = localStorage.getItem("hasCompletedOnboarding");
-      if (!hasCompletedOnboarding) {
-        window.location.href = '/onboarding';
-      } else {
-        window.location.href = '/dashboard';
-      }
     } catch (error) {
       toast.error("LinkedIn login failed");
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -227,9 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
       toast.success("Account created successfully!");
-      
-      // Redirect to onboarding
-      window.location.href = '/onboarding';
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
       throw error;

@@ -1,61 +1,14 @@
 
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Calendar as CalendarIcon, 
-  Settings as SettingsIcon, 
-  LogOut, 
-  Menu, 
-  Users, 
-  X,
-  LayoutGrid,
-  BellDot,
-} from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/contexts/PlanContext";
+import { Button } from "@/components/ui/button";
+import { LayoutDashboard, Calendar, Settings, LogOut, Users } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useMobile } from "@/hooks/use-mobile";
-
-interface NavItemProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-  onNavigate?: () => void;
-  end?: boolean;
-  badge?: React.ReactNode;
-}
-
-const NavItem = ({ to, icon, label, active, onNavigate, end, badge }: NavItemProps) => {
-  return (
-    <Link
-      to={to}
-      onClick={onNavigate}
-      className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-foreground",
-        active && "bg-blue-50 text-blue-700 font-medium hover:text-blue-700",
-        !end && "mb-1"
-      )}
-    >
-      {icon}
-      <span>{label}</span>
-      {badge}
-    </Link>
-  );
-};
+import { Card } from "@/components/ui/card";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -63,173 +16,140 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout, isAdmin } = useAuth();
-  const { remainingPosts } = usePlan();
+  const { userPlan, plans, remainingPosts } = usePlan();
   const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-  
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-  
-  const closeSidebar = () => {
-    setSidebarOpen(false);
-  };
-  
+
   const navItems = [
     {
-      to: "/dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-      label: "Dashboard",
-      active: location.pathname === "/dashboard"
+      name: "Dashboard",
+      path: "/dashboard",
+      icon: <LayoutDashboard className="h-5 w-5 mr-2" />,
     },
     {
-      to: "/calendar",
-      icon: <CalendarIcon className="h-5 w-5" />,
-      label: "Content Calendar",
-      active: location.pathname === "/calendar"
+      name: "Calendar",
+      path: "/calendar",
+      icon: <Calendar className="h-5 w-5 mr-2" />,
+      requiredPlan: "pro", // This route requires Pro plan or higher
     },
     {
-      to: "/carousel-editor",
-      icon: <LayoutGrid className="h-5 w-5" />,
-      label: "Carousel Editor",
-      active: location.pathname === "/carousel-editor"
+      name: "Settings",
+      path: "/settings",
+      icon: <Settings className="h-5 w-5 mr-2" />,
     },
-    {
-      to: "/settings",
-      icon: <SettingsIcon className="h-5 w-5" />,
-      label: "Settings",
-      active: location.pathname === "/settings"
-    }
   ];
-  
+
   if (isAdmin) {
     navItems.push({
-      to: "/admin",
-      icon: <Users className="h-5 w-5" />,
-      label: "Admin",
-      active: location.pathname === "/admin",
-      badge: <Badge className="ml-auto bg-red-500">New</Badge>
+      name: "Admin",
+      path: "/admin",
+      icon: <Users className="h-5 w-5 mr-2" />,
     });
   }
-  
-  const renderSidebar = () => (
-    <div className="space-y-6 py-4">
-      <div className="px-3 py-2">
-        <Link to="/dashboard" className="flex items-center gap-2 mb-6" onClick={closeSidebar}>
-          <div className="h-8 w-8 bg-linkedin-primary rounded-md flex items-center justify-center">
-            <span className="text-white font-bold text-sm">LI</span>
-          </div>
-          <span className="font-semibold text-xl">ContentSphere</span>
-        </Link>
-        <div className="space-y-1">
-          {navItems.map((item, index) => (
-            <NavItem 
-              key={item.to} 
-              to={item.to} 
-              icon={item.icon} 
-              label={item.label} 
-              active={item.active} 
-              onNavigate={closeSidebar}
-              end={index === navItems.length - 1}
-              badge={item.badge}
-            />
-          ))}
-        </div>
-      </div>
-      
-      <div className="px-3">
-        <Separator />
-      </div>
-      
-      <div className="px-3">
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="flex items-center mb-2">
-            <BellDot className="h-5 w-5 text-blue-500 mr-2" />
-            <span className="font-semibold">Posts Remaining</span>
-          </div>
-          <div className="bg-white rounded-md p-3 text-center">
-            <span className="text-2xl font-bold text-blue-700">{remainingPosts}</span>
-            <p className="text-sm text-gray-600 mt-1">posts this month</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-  
+
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Mobile sidebar */}
-      {isMobile ? (
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="absolute top-4 left-4 z-50">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            {renderSidebar()}
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <aside className="hidden md:flex md:w-64 md:flex-col md:inset-y-0 border-r">
-          {renderSidebar()}
-        </aside>
-      )}
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Sidebar */}
+      <div className="w-full md:w-64 bg-white border-r border-gray-200 flex flex-col">
+        {/* Logo */}
+        <div className="px-6 py-4">
+          <Link to="/dashboard" className="flex items-center">
+            <div className="h-8 w-8 bg-linkedin-primary rounded-md flex items-center justify-center">
+              <span className="text-white font-bold">CS</span>
+            </div>
+            <span className="ml-2 font-semibold text-xl text-gray-900">ContentScribe</span>
+          </Link>
+        </div>
+        
+        <Separator />
+        
+        {/* User info */}
+        <div className="px-6 py-4 flex items-center">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={user?.profileImage} alt={user?.name} />
+            <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+          </Avatar>
+          <div className="ml-3">
+            <p className="font-medium text-sm">{user?.name}</p>
+            <p className="text-xs text-gray-500">
+              {userPlan ? plans[userPlan.planType].name : "Free"} Plan
+            </p>
+          </div>
+        </div>
+        
+        {/* Navigation */}
+        <nav className="flex-1 px-4 py-2">
+          <ul className="space-y-1">
+            {navItems.map((item) => {
+              // Check if this route requires a specific plan
+              const canAccess = !item.requiredPlan || 
+                (userPlan && (userPlan.planType === item.requiredPlan || userPlan.planType === "proPlus"));
+              
+              return (
+                <li key={item.path}>
+                  <Link
+                    to={canAccess ? item.path : "/settings"} 
+                    className={cn(
+                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                      location.pathname === item.path
+                        ? "bg-linkedin-light text-linkedin-primary"
+                        : "text-gray-600 hover:bg-gray-100",
+                      !canAccess && "opacity-50 cursor-not-allowed"
+                    )}
+                    onClick={(e) => !canAccess && e.preventDefault()}
+                  >
+                    {item.icon}
+                    {item.name}
+                    {!canAccess && (
+                      <span className="ml-2 text-xs bg-gray-200 px-1.5 py-0.5 rounded">
+                        Pro+
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        
+        {/* Post limit indicator */}
+        <div className="px-6 py-4">
+          <Card className="p-3">
+            <p className="text-xs font-medium text-gray-600 mb-1">
+              Posts Remaining This Month
+            </p>
+            <div className="bg-gray-200 h-2 rounded-full">
+              <div 
+                className="bg-linkedin-primary h-2 rounded-full" 
+                style={{ 
+                  width: `${userPlan ? (remainingPosts / plans[userPlan.planType].postsPerMonth) * 100 : 0}%`,
+                  maxWidth: '100%'
+                }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {remainingPosts} of {userPlan ? plans[userPlan.planType].postsPerMonth : 0} posts left
+            </p>
+          </Card>
+        </div>
+        
+        {/* Logout */}
+        <div className="px-4 py-4">
+          <Button 
+            variant="outline" 
+            className="w-full flex items-center justify-center text-gray-600"
+            onClick={logout}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Log Out
+          </Button>
+        </div>
+      </div>
       
       {/* Main content */}
-      <div className="flex flex-col flex-1">
-        <header className="sticky top-0 z-10 bg-white border-b h-16 flex items-center px-4 md:px-6">
-          <div className="ml-auto flex items-center gap-4">
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative rounded-full h-10 w-10 p-0">
-                    <Avatar>
-                      <AvatarImage src={user.profileImage} />
-                      <AvatarFallback>
-                        {getInitials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-0.5">
-                      <p className="text-sm font-medium line-clamp-1">{user.name}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings">
-                      <SettingsIcon className="mr-2 h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </header>
-        <main className="flex-1">{children}</main>
+      <div className="flex-1 overflow-auto">
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          {children}
+        </main>
       </div>
     </div>
   );

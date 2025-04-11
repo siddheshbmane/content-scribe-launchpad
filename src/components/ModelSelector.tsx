@@ -4,10 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle, Check, AlertTriangle, Key } from "lucide-react";
+import { HelpCircle, Check, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 interface ModelSelectorProps {
   value: string;
@@ -26,7 +24,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
 }) => {
   const [savedApiKey, setSavedApiKey] = useState("");
   const [apiKeyStatus, setApiKeyStatus] = useState<"valid" | "invalid" | "untested">("untested");
-  const [showApiKey, setShowApiKey] = useState(false);
   const { toast } = useToast();
   
   // Load API key from localStorage on component mount
@@ -41,33 +38,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   }, [apiKey, onApiKeyChange]);
 
-  // Validate the API key format
-  const validateApiKey = (key: string): boolean => {
-    // Basic OpenAI API key validation - should start with "sk-" and be at least 20 chars
-    return key.startsWith("sk-") && key.length > 20;
-  };
-
-  // Test the API key with OpenAI
-  const testApiKey = async (key: string): Promise<boolean> => {
-    try {
-      // In a real app, we would make a test call to the OpenAI API
-      // For MVP, we'll just validate the format
-      return validateApiKey(key);
-    } catch (error) {
-      console.error("Error testing API key:", error);
-      return false;
-    }
-  };
-
   // Save API key to localStorage when it changes
-  const handleApiKeyChange = async (value: string) => {
+  const handleApiKeyChange = (value: string) => {
     onApiKeyChange(value);
+    setApiKeyStatus("untested");
     
     if (value) {
-      // Test the API key
-      const isValid = await testApiKey(value);
-      
-      if (isValid) {
+      // Basic OpenAI API key validation
+      if (value.startsWith("sk-") && value.length > 20) {
         localStorage.setItem("openAIApiKey", value);
         setSavedApiKey(value);
         setApiKeyStatus("valid");
@@ -85,8 +63,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           variant: "destructive",
         });
       }
-    } else {
-      setApiKeyStatus("untested");
     }
   };
   
@@ -117,8 +93,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                   <HelpCircle className="h-4 w-4 text-gray-500" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs p-3">
-                  <p>Enter your own OpenAI API key to use your account for content generation. Your API key is stored securely in your browser and never shared.</p>
-                  <p className="mt-2 text-xs">You can find your API key in your OpenAI account dashboard at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">platform.openai.com/api-keys</a>.</p>
+                  <p>Enter your own OpenAI API key to use your account for content generation. Your API key is stored securely and never shared.</p>
+                  <p className="mt-2 text-xs">You can find your API key in your OpenAI account dashboard.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -127,7 +103,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           <div className="relative">
             <Input
               id="apiKey"
-              type={showApiKey ? "text" : "password"}
+              type="password"
               placeholder={savedApiKey ? "API key loaded from settings" : "sk-..."}
               value={apiKey}
               onChange={(e) => handleApiKeyChange(e.target.value)}
@@ -142,41 +118,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
             {apiKeyStatus === "invalid" && (
               <AlertTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
             )}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              type="button"
-              onClick={() => setShowApiKey(!showApiKey)}
-              className="absolute right-9 top-1/2 transform -translate-y-1/2 h-8 w-8"
-            >
-              <Key className="h-4 w-4" />
-            </Button>
           </div>
           
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500">
-              Your API key is stored locally and used only for your content generation requests.
-            </p>
-            {savedApiKey && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => {
-                  localStorage.removeItem("openAIApiKey");
-                  setSavedApiKey("");
-                  onApiKeyChange("");
-                  setApiKeyStatus("untested");
-                  toast({
-                    title: "API key removed",
-                    description: "Your OpenAI API key has been removed.",
-                  });
-                }}
-                className="text-xs h-7"
-              >
-                Clear Key
-              </Button>
-            )}
-          </div>
+          <p className="text-xs text-gray-500">
+            Your API key is stored securely and used only for your content generation requests.
+            {savedApiKey && " Your saved API key has been loaded from settings."}
+          </p>
         </div>
       )}
     </div>

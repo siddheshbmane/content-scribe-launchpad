@@ -1,312 +1,169 @@
 
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, User, Linkedin } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-
-// Define schemas
-const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-});
-
-const registerSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+import { Linkedin } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const navigate = useNavigate();
-  const { login, register, loginWithLinkedIn, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isLinkedInLoading, setIsLinkedInLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, loginWithLinkedIn } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Login form
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  // Register form
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
-
-  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
-    try {
-      await login(values.email, values.password);
-      // Redirect handled in auth context
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
-    }
-  };
+    setIsSubmitting(true);
 
-  const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
-    setError(null);
     try {
-      await register(values.name, values.email, values.password);
-      // Redirect handled in auth context
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
+      await login(email, password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to login");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleLinkedInLogin = async () => {
     setError(null);
-    setIsLinkedInLoading(true);
+    setIsSubmitting(true);
+
     try {
       await loginWithLinkedIn();
-      // Redirect handled in auth context
-    } catch (error) {
-      setError("LinkedIn login failed. Please try again.");
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Failed to login with LinkedIn");
+      toast({
+        title: "Login Failed",
+        description: "Could not login with LinkedIn. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLinkedInLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center mb-4">
-          <div className="h-10 w-10 bg-linkedin-primary rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">LI</span>
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <div className="h-12 w-12 bg-linkedin-primary rounded-md flex items-center justify-center">
+            <span className="text-white font-bold text-xl">CS</span>
           </div>
-          <h1 className="ml-2 text-2xl font-bold">ContentSphere</h1>
         </div>
-        <p className="text-gray-600">AI-powered LinkedIn content creation</p>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Sign in to your account
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Or{" "}
+          <Link to="/register" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
+            create a new account
+          </Link>
+        </p>
       </div>
-      
-      <Card className="w-full max-w-md">
-        <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "register")}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Log In</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
-          
-          <CardContent className="pt-6">
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <TabsContent value="login" className="space-y-4">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="you@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Logging in...
-                      </>
-                    ) : (
-                      "Log in"
-                    )}
-                  </Button>
-                </form>
-              </Form>
-              
-              <div className="relative flex items-center py-2">
-                <div className="flex-grow border-t border-gray-300"></div>
-                <span className="flex-shrink mx-4 text-gray-400 text-sm">or</span>
-                <div className="flex-grow border-t border-gray-300"></div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Demo: user@example.com or admin@example.com
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Demo password: password
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-linkedin-primary focus:ring-linkedin-primary border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
               </div>
-              
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleLinkedInLogin}
-                disabled={isLinkedInLoading}
-                className="w-full"
-              >
-                {isLinkedInLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Linkedin className="mr-2 h-4 w-4 text-linkedin-primary" />
-                )}
-                Continue with LinkedIn
-              </Button>
-            </TabsContent>
-            
-            <TabsContent value="register" className="space-y-4">
-              <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={registerForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="you@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={registerForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={registerForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      "Create account"
-                    )}
-                  </Button>
-                </form>
-              </Form>
-              
-              <div className="relative flex items-center py-2">
-                <div className="flex-grow border-t border-gray-300"></div>
-                <span className="flex-shrink mx-4 text-gray-400 text-sm">or</span>
-                <div className="flex-grow border-t border-gray-300"></div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
+                  Forgot your password?
+                </a>
               </div>
-              
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="mt-6">
               <Button
-                type="button"
                 variant="outline"
+                className="w-full flex items-center justify-center"
                 onClick={handleLinkedInLogin}
-                disabled={isLinkedInLoading}
-                className="w-full"
+                disabled={isSubmitting}
               >
-                {isLinkedInLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Linkedin className="mr-2 h-4 w-4 text-linkedin-primary" />
-                )}
-                Sign up with LinkedIn
+                <Linkedin className="w-5 h-5 mr-2 text-linkedin-primary" />
+                Sign in with LinkedIn
               </Button>
-            </TabsContent>
-          </CardContent>
-        </Tabs>
-        
-        <CardFooter className="flex justify-center pt-2 pb-6 px-6">
-          <p className="text-sm text-gray-500">
-            By continuing, you agree to our <a href="#" className="text-linkedin-primary hover:underline">Terms of Service</a> and <a href="#" className="text-linkedin-primary hover:underline">Privacy Policy</a>
-          </p>
-        </CardFooter>
-      </Card>
-      
-      <div className="mt-8">
-        <Link to="/" className="text-linkedin-primary hover:underline text-sm">
-          Back to homepage
-        </Link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
