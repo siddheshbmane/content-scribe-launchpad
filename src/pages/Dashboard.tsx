@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -54,28 +53,16 @@ const Dashboard = () => {
   const [generatorTopic, setGeneratorTopic] = useState("");
   const [generatorType, setGeneratorType] = useState<"single" | "calendar">("single");
 
-  // Load posts from localStorage
   useEffect(() => {
-    // Load drafts
     const drafts = JSON.parse(localStorage.getItem('contentDrafts') || '[]');
-    
-    // Load scheduled posts
     const scheduled = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
-    
-    // Load published posts
     const published = JSON.parse(localStorage.getItem('publishedPosts') || '[]');
-    
-    // Combine all posts
     const combined = [...drafts, ...scheduled, ...published];
-    
-    // Sort by date (newest first)
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    
     setAllPosts(combined);
     setFilteredPosts(combined);
   }, []);
 
-  // Apply filter when statusFilter changes
   useEffect(() => {
     if (statusFilter === "all") {
       setFilteredPosts(allPosts);
@@ -106,7 +93,6 @@ const Dashboard = () => {
       return;
     }
 
-    // Set topic if provided
     if (topic) {
       setGeneratorTopic(topic);
     } else {
@@ -118,27 +104,20 @@ const Dashboard = () => {
   };
 
   const handleEditPost = (post: Post) => {
-    // Implement post editing
     toast({
       title: "Edit Post",
       description: `Editing post: ${post.title}`,
     });
-
-    // In a real app, we would open the post editor with this post loaded
   };
 
   const handlePreviewPost = (post: Post) => {
-    // Implement post preview
     toast({
       title: "Preview Post",
       description: `Previewing post: ${post.title}`,
     });
-
-    // In a real app, we would show a preview modal
   };
 
   const handleDeletePost = (postId: string) => {
-    // Find which list the post is in
     const draft = JSON.parse(localStorage.getItem('contentDrafts') || '[]')
       .filter((p: Post) => p.id !== postId);
     
@@ -148,12 +127,10 @@ const Dashboard = () => {
     const published = JSON.parse(localStorage.getItem('publishedPosts') || '[]')
       .filter((p: Post) => p.id !== postId);
     
-    // Update localStorage
     localStorage.setItem('contentDrafts', JSON.stringify(draft));
     localStorage.setItem('scheduledPosts', JSON.stringify(scheduled));
     localStorage.setItem('publishedPosts', JSON.stringify(published));
     
-    // Update state
     const updatedPosts = allPosts.filter(post => post.id !== postId);
     setAllPosts(updatedPosts);
     
@@ -164,13 +141,10 @@ const Dashboard = () => {
   };
 
   const handleSchedulePost = (post: Post) => {
-    // Implement post scheduling
     toast({
       title: "Schedule Post",
       description: `Scheduling post: ${post.title}`,
     });
-
-    // In a real app, we would open a scheduling dialog
   };
 
   const handleFilterChange = (value: string) => {
@@ -178,7 +152,6 @@ const Dashboard = () => {
   };
 
   const handleViewAllPosts = () => {
-    // In a real app, this would navigate to a dedicated posts page
     toast({
       title: "View All Posts",
       description: "Viewing all posts",
@@ -228,13 +201,11 @@ const Dashboard = () => {
     },
   ];
 
-  // Get recent posts (up to 3)
   const recentPosts = filteredPosts.slice(0, 3);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Page header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -254,7 +225,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats cards */}
         <div className="grid gap-4 md:grid-cols-3">
           {stats.map((stat) => (
             <Card key={stat.id}>
@@ -279,7 +249,6 @@ const Dashboard = () => {
           />
         ) : (
           <>
-            {/* Content Tabs */}
             <Tabs defaultValue="recent">
               <div className="flex justify-between items-center">
                 <TabsList>
@@ -443,7 +412,6 @@ const Dashboard = () => {
               </TabsContent>
             </Tabs>
 
-            {/* Call to Action Cards */}
             <div className="grid gap-4 md:grid-cols-2">
               <Card className="bg-linkedin-light border-0">
                 <CardHeader>
@@ -491,7 +459,7 @@ const Dashboard = () => {
                     <div className="flex justify-between text-sm">
                       <span>AI Image Generator</span>
                       <span>
-                        {userPlan && plans[userPlan.planType].hasImageGenerator ? (
+                        {userPlan && plans[userPlan.planType].hasImageGeneration ? (
                           <span className="text-green-600">Included</span>
                         ) : (
                           <span className="text-gray-500">Not included</span>
@@ -501,7 +469,7 @@ const Dashboard = () => {
                     <div className="flex justify-between text-sm">
                       <span>Calendar Access</span>
                       <span>
-                        {userPlan && plans[userPlan.planType].hasCalendarAccess ? (
+                        {userPlan && (userPlan.planType === 'pro' || userPlan.planType === 'proPlus') ? (
                           <span className="text-green-600">Included</span>
                         ) : (
                           <span className="text-gray-500">Not included</span>
