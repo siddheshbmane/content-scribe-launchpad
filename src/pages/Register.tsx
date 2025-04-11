@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Linkedin } from "lucide-react";
 
 const Register = () => {
@@ -12,177 +13,179 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, loginWithLinkedIn } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isLinkedInRegistering, setIsLinkedInRegistering] = useState(false);
+  
+  const { toast } = useToast();
+  const { register, loginWithLinkedIn, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  // If user is already logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!name || !email || !password || !confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
       return;
     }
-
-    setIsSubmitting(true);
-
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsRegistering(true);
+    
     try {
       await register(name, email, password);
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to register");
+      navigate("/onboarding");
+    } catch (error) {
+      // Error is already handled in the auth context
     } finally {
-      setIsSubmitting(false);
+      setIsRegistering(false);
     }
   };
 
   const handleLinkedInRegister = async () => {
-    setError(null);
-    setIsSubmitting(true);
-
+    setIsLinkedInRegistering(true);
+    
     try {
       await loginWithLinkedIn();
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Failed to register with LinkedIn");
+      navigate("/onboarding");
+    } catch (error) {
+      // Error is already handled in the auth context
     } finally {
-      setIsSubmitting(false);
+      setIsLinkedInRegistering(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="h-12 w-12 bg-linkedin-primary rounded-md flex items-center justify-center">
-            <span className="text-white font-bold text-xl">CS</span>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <div className="flex justify-center">
+            <div className="h-12 w-12 bg-linkedin-primary rounded-lg flex items-center justify-center">
+              <span className="text-white text-xl font-bold">CS</span>
+            </div>
           </div>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">ContentScribe</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Create an account to start your LinkedIn journey
+          </p>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create a new account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{" "}
-          <Link to="/login" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
-            sign in to your account
-          </Link>
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
+        
+        <div className="mt-8">
+          <Button 
+            className="w-full bg-[#0077B5] hover:bg-[#006699] h-12"
+            disabled={isLinkedInRegistering}
+            onClick={handleLinkedInRegister}
+          >
+            <Linkedin className="mr-2 h-5 w-5" />
+            {isLinkedInRegistering ? "Connecting to LinkedIn..." : "Sign up with LinkedIn"}
+          </Button>
+          
+          <div className="mt-6 relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gray-50 text-gray-500">
+                Or sign up with email
+              </span>
+            </div>
+          </div>
+          
+          <form className="mt-6 space-y-4" onSubmit={handleRegister}>
+            <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
+                name="name"
                 type="text"
-                placeholder="John Doe"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
                 required
-                className="mt-1"
               />
             </div>
-
-            <div>
+            
+            <div className="space-y-2">
               <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
-                placeholder="you@example.com"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@example.com"
                 required
-                className="mt-1"
               />
             </div>
-
-            <div>
+            
+            <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                placeholder="••••••••"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
                 required
-                className="mt-1"
               />
             </div>
-
-            <div>
-              <Label htmlFor="confirm-password">Confirm Password</Label>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
-                id="confirm-password"
+                id="confirmPassword"
+                name="confirmPassword"
                 type="password"
-                placeholder="••••••••"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
                 required
-                className="mt-1"
               />
             </div>
-
-            <div className="flex items-center">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 text-linkedin-primary focus:ring-linkedin-primary border-gray-300 rounded"
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                I agree to the{" "}
-                <a href="#" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
-                  Terms of Service
-                </a>{" "}
-                and{" "}
-                <a href="#" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
-                  Privacy Policy
-                </a>
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full"
+            
+            <Button 
+              type="submit" 
+              className="w-full h-11"
+              disabled={isRegistering}
             >
-              {isSubmitting ? "Creating account..." : "Create account"}
+              {isRegistering ? "Creating account..." : "Create Account"}
             </Button>
           </form>
-
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center"
-                onClick={handleLinkedInRegister}
-                disabled={isSubmitting}
-              >
-                <Linkedin className="w-5 h-5 mr-2 text-linkedin-primary" />
-                Sign up with LinkedIn
-              </Button>
-            </div>
-          </div>
+        </div>
+        
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link 
+              to="/login" 
+              className="font-medium text-linkedin-primary hover:text-linkedin-primary/80"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

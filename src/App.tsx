@@ -14,6 +14,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
+import Carousels from "./pages/Carousels";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -31,6 +33,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route 
                 path="/dashboard" 
                 element={
@@ -44,6 +47,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Calendar />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/carousels" 
+                element={
+                  <ProtectedRoute>
+                    <Carousels />
                   </ProtectedRoute>
                 }
               />

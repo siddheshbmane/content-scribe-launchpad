@@ -9,6 +9,8 @@ export interface User {
   email: string;
   profileImage?: string;
   role: "user" | "admin";
+  jobTitle?: string;
+  industry?: string;
 }
 
 // Define the context type
@@ -20,6 +22,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isAdmin: boolean;
+  updateUserProfile: (data: Partial<User>) => Promise<void>;
 }
 
 // Create the context
@@ -33,7 +36,9 @@ const MOCK_USERS = [
     email: "user@example.com",
     password: "password",
     profileImage: "https://i.pravatar.cc/150?img=1",
-    role: "user" as const
+    role: "user" as const,
+    jobTitle: "Marketing Specialist",
+    industry: "Technology"
   },
   {
     id: "2",
@@ -41,7 +46,9 @@ const MOCK_USERS = [
     email: "admin@example.com",
     password: "password",
     profileImage: "https://i.pravatar.cc/150?img=2",
-    role: "admin" as const
+    role: "admin" as const,
+    jobTitle: "Marketing Director",
+    industry: "Software"
   }
 ];
 
@@ -95,6 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const mockUser = MOCK_USERS[0];
       const { password: _, ...userWithoutPassword } = mockUser;
       
+      // In a real LinkedIn OAuth flow, we would receive user profile data including:
+      // - Name
+      // - Email
+      // - Profile Image URL
+      // - Potentially job title and industry
+
       setUser(userWithoutPassword);
       localStorage.setItem("user", JSON.stringify(userWithoutPassword));
       toast.success("Successfully logged in with LinkedIn!");
@@ -122,7 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: Math.random().toString(36).substring(7),
         name,
         email,
-        role: "user" as const
+        role: "user" as const,
+        jobTitle: "",
+        industry: ""
       };
       
       setUser(newUser);
@@ -130,6 +145,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success("Account created successfully!");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserProfile = async (data: Partial<User>) => {
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (!user) {
+        throw new Error("No user logged in");
+      }
+      
+      // Update user object
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      toast.success("Profile updated successfully!");
+      return;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Update failed");
       throw error;
     } finally {
       setIsLoading(false);
@@ -153,7 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithLinkedIn,
         register,
         logout,
-        isAdmin
+        isAdmin,
+        updateUserProfile
       }}
     >
       {children}

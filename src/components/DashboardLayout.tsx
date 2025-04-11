@@ -1,55 +1,97 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/contexts/PlanContext";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Calendar, Settings, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, Calendar, Settings, LogOut, Users, Menu, X, Layers } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+}
+
+interface NavItem {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  requiredPlan?: "pro" | "proPlus";
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { user, logout, isAdmin } = useAuth();
   const { userPlan, plans, remainingPosts } = usePlan();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
-  const navItems = [
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const navItems: NavItem[] = [
     {
-      name: "Dashboard",
-      path: "/dashboard",
+      to: "/dashboard",
       icon: <LayoutDashboard className="h-5 w-5 mr-2" />,
+      label: "Dashboard",
+      active: location.pathname === "/dashboard",
     },
     {
-      name: "Calendar",
-      path: "/calendar",
+      to: "/calendar",
       icon: <Calendar className="h-5 w-5 mr-2" />,
-      requiredPlan: "pro", // This route requires Pro plan or higher
+      label: "Calendar",
+      active: location.pathname === "/calendar",
+      requiredPlan: "pro",
     },
     {
-      name: "Settings",
-      path: "/settings",
+      to: "/carousels",
+      icon: <Layers className="h-5 w-5 mr-2" />,
+      label: "Carousels",
+      active: location.pathname === "/carousels",
+    },
+    {
+      to: "/settings",
       icon: <Settings className="h-5 w-5 mr-2" />,
+      label: "Settings",
+      active: location.pathname === "/settings",
     },
   ];
 
   if (isAdmin) {
     navItems.push({
-      name: "Admin",
-      path: "/admin",
+      to: "/admin",
       icon: <Users className="h-5 w-5 mr-2" />,
+      label: "Admin",
+      active: location.pathname === "/admin",
     });
   }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Mobile menu button */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={toggleSidebar}
+          className="bg-white"
+        >
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      </div>
+
       {/* Sidebar */}
-      <div className="w-full md:w-64 bg-white border-r border-gray-200 flex flex-col">
+      <div className={cn(
+        "w-full md:w-64 bg-white border-r border-gray-200 flex flex-col",
+        "fixed md:sticky top-0 h-full z-40 transition-all duration-300 ease-in-out",
+        sidebarOpen ? "left-0" : "-left-full md:left-0",
+        "overflow-y-auto"
+      )}>
         {/* Logo */}
         <div className="px-6 py-4">
           <Link to="/dashboard" className="flex items-center">
@@ -85,12 +127,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 (userPlan && (userPlan.planType === item.requiredPlan || userPlan.planType === "proPlus"));
               
               return (
-                <li key={item.path}>
+                <li key={item.to}>
                   <Link
-                    to={canAccess ? item.path : "/settings"} 
+                    to={canAccess ? item.to : "/settings"} 
                     className={cn(
                       "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      location.pathname === item.path
+                      item.active
                         ? "bg-linkedin-light text-linkedin-primary"
                         : "text-gray-600 hover:bg-gray-100",
                       !canAccess && "opacity-50 cursor-not-allowed"
@@ -98,7 +140,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                     onClick={(e) => !canAccess && e.preventDefault()}
                   >
                     {item.icon}
-                    {item.name}
+                    {item.label}
                     {!canAccess && (
                       <span className="ml-2 text-xs bg-gray-200 px-1.5 py-0.5 rounded">
                         Pro+
@@ -146,8 +188,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       </div>
       
       {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <main className="max-w-7xl mx-auto px-4 py-6">
+      <div className={cn(
+        "flex-1 overflow-auto transition-all duration-300 ease-in-out",
+        sidebarOpen && isMobile ? "ml-0 md:ml-64" : "ml-0"
+      )}>
+        <main className="max-w-7xl mx-auto px-4 py-6 pt-16 md:pt-6">
           {children}
         </main>
       </div>
