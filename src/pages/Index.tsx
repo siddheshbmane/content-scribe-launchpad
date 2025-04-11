@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,15 @@ import {
   Sparkles, 
   Globe, 
   ChevronRight,
-  Linkedin
+  Linkedin,
+  Edit,
+  Clock,
+  BarChart2,
+  Layout,
+  Zap,
+  MessageSquare,
+  History,
+  Users
 } from "lucide-react";
 
 const Index = () => {
@@ -95,6 +104,66 @@ const Index = () => {
                 Create eye-catching carousel images for your posts with our AI image generator.
               </p>
             </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="h-12 w-12 bg-linkedin-light rounded-lg flex items-center justify-center mb-4">
+                <Edit className="h-6 w-6 text-linkedin-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Multiple Tones</h3>
+              <p className="text-gray-600">
+                Choose from professional, friendly, educational, and other tones to match your brand voice.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="h-12 w-12 bg-linkedin-light rounded-lg flex items-center justify-center mb-4">
+                <Clock className="h-6 w-6 text-linkedin-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Scheduled Publishing</h3>
+              <p className="text-gray-600">
+                Set it and forget it with automatic publishing or one-click copy for manual posting.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="h-12 w-12 bg-linkedin-light rounded-lg flex items-center justify-center mb-4">
+                <BarChart2 className="h-6 w-6 text-linkedin-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Analytics</h3>
+              <p className="text-gray-600">
+                Track your content performance and engagement to refine your LinkedIn strategy.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="h-12 w-12 bg-linkedin-light rounded-lg flex items-center justify-center mb-4">
+                <Layout className="h-6 w-6 text-linkedin-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Post Templates</h3>
+              <p className="text-gray-600">
+                Access a library of proven content templates designed for maximum engagement.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="h-12 w-12 bg-linkedin-light rounded-lg flex items-center justify-center mb-4">
+                <Zap className="h-6 w-6 text-linkedin-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Advanced AI Models</h3>
+              <p className="text-gray-600">
+                Choose from various AI models including GPT-3.5 and more for tailored content generation.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="h-12 w-12 bg-linkedin-light rounded-lg flex items-center justify-center mb-4">
+                <MessageSquare className="h-6 w-6 text-linkedin-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Suggested Topics</h3>
+              <p className="text-gray-600">
+                Never run out of ideas with AI-powered content topic suggestions tailored to your industry.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -107,7 +176,7 @@ const Index = () => {
             Choose the plan that's right for your LinkedIn content strategy
           </p>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
             {/* Free Plan */}
             <div className="border border-gray-200 rounded-lg p-8 bg-white">
               <h3 className="text-2xl font-bold mb-2">Free</h3>
@@ -131,6 +200,36 @@ const Index = () => {
               
               <Link to="/register">
                 <Button className="w-full" variant="outline">Get Started</Button>
+              </Link>
+            </div>
+
+            {/* Basic Plan */}
+            <div className="border border-gray-200 rounded-lg p-8 bg-white">
+              <h3 className="text-2xl font-bold mb-2">Basic</h3>
+              <p className="text-gray-600 mb-4">For casual content creators</p>
+              <p className="text-4xl font-bold mb-6">$10<span className="text-xl text-gray-500 font-normal">/mo</span></p>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>10 posts per month</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Calendar access</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Watermarked images</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <span>Basic scheduling</span>
+                </li>
+              </ul>
+              
+              <Link to="/register">
+                <Button className="w-full" variant="outline">Start Basic Plan</Button>
               </Link>
             </div>
             
@@ -220,27 +319,27 @@ const Index = () => {
               <div>
                 <h3 className="font-semibold mb-4">Product</h3>
                 <ul className="space-y-2">
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Testimonials</a></li>
+                  <li><Link to="/features" className="text-gray-400 hover:text-white transition-colors">Features</Link></li>
+                  <li><Link to="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link></li>
+                  <li><Link to="/testimonials" className="text-gray-400 hover:text-white transition-colors">Testimonials</Link></li>
                 </ul>
               </div>
               
               <div>
                 <h3 className="font-semibold mb-4">Company</h3>
                 <ul className="space-y-2">
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
+                  <li><Link to="/about" className="text-gray-400 hover:text-white transition-colors">About</Link></li>
+                  <li><Link to="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link></li>
+                  <li><Link to="/careers" className="text-gray-400 hover:text-white transition-colors">Careers</Link></li>
                 </ul>
               </div>
               
               <div>
                 <h3 className="font-semibold mb-4">Legal</h3>
                 <ul className="space-y-2">
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a></li>
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms</a></li>
-                  <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Security</a></li>
+                  <li><Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy</Link></li>
+                  <li><Link to="/terms" className="text-gray-400 hover:text-white transition-colors">Terms</Link></li>
+                  <li><Link to="/security" className="text-gray-400 hover:text-white transition-colors">Security</Link></li>
                 </ul>
               </div>
             </div>

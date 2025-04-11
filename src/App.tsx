@@ -15,7 +15,14 @@ import Register from "./pages/Register";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
-import Carousels from "./pages/Carousels";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
+import About from "./pages/About";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Security from "./pages/Security";
+import Careers from "./pages/Careers";
+import Blog from "./pages/Blog";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -34,6 +41,14 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/features" element={<Features />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/security" element={<Security />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/blog" element={<Blog />} />
               <Route 
                 path="/dashboard" 
                 element={
@@ -47,14 +62,6 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Calendar />
-                  </ProtectedRoute>
-                }
-              />
-              <Route 
-                path="/carousels" 
-                element={
-                  <ProtectedRoute>
-                    <Carousels />
                   </ProtectedRoute>
                 }
               />

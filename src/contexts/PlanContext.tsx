@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 
-export type PlanType = "free" | "pro" | "proPlus";
+export type PlanType = "free" | "basic" | "pro" | "proPlus";
 
 export interface Plan {
   type: PlanType;
@@ -49,6 +49,17 @@ const PLAN_DETAILS: Record<PlanType, Plan> = {
     canPublish: false,
     canUseOwnApiKey: false,
     price: 0
+  },
+  basic: {
+    type: "basic",
+    name: "Basic",
+    postsPerMonth: 10,
+    hasWatermark: true,
+    hasCalendarAccess: true,
+    hasImageGenerator: false,
+    canPublish: false,
+    canUseOwnApiKey: false,
+    price: 10
   },
   pro: {
     type: "pro",

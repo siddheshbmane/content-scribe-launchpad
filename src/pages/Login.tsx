@@ -1,20 +1,31 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
 import { Linkedin } from "lucide-react";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLinkedInLoggingIn, setIsLinkedInLoggingIn] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
   
   const { toast } = useToast();
   const { login, loginWithLinkedIn, user } = useAuth();
@@ -80,6 +91,39 @@ const Login = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resetEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsResetting(true);
+    
+    try {
+      // In a real app, call API to send password reset email
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox for instructions to reset your password",
+      });
+      
+      setShowResetPassword(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full space-y-8">
@@ -135,12 +179,16 @@ const Login = () => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <div className="text-sm">
-                  <Link 
-                    to="/forgot-password" 
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setShowResetPassword(true);
+                      setResetEmail(email);
+                    }}
                     className="font-medium text-linkedin-primary hover:text-linkedin-primary/80"
                   >
                     Forgot your password?
-                  </Link>
+                  </button>
                 </div>
               </div>
               <Input
@@ -176,13 +224,42 @@ const Login = () => {
             </Link>
           </p>
         </div>
-
-        <div className="mt-6 text-center text-xs text-gray-500">
-          <p>Test credentials:</p>
-          <p>Email: user@example.com | Password: password</p>
-          <p>Admin: admin@example.com | Password: password</p>
-        </div>
       </div>
+
+      <AlertDialog open={showResetPassword} onOpenChange={setShowResetPassword}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset your password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter your email address and we'll send you instructions to reset your password.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Email address</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="your.email@example.com"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isResetting}
+              onClick={(e) => {
+                e.preventDefault();
+                handleResetPassword();
+              }}
+            >
+              {isResetting ? "Sending..." : "Send reset instructions"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
