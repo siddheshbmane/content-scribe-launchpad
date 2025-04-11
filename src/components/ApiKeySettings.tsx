@@ -146,7 +146,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
       </div>
       
       {learnMoreUrl && (
-        <Alert variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+        <Alert className="bg-blue-50 text-blue-800 border-blue-200">
           <div className="flex items-center">
             <Sparkles className="h-4 w-4 text-blue-500 mr-2" />
             <AlertDescription className="text-sm">

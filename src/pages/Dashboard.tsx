@@ -21,7 +21,8 @@ import {
   Plus,
   Calendar,
   Eye,
-  Trash2
+  Trash2,
+  LayoutGrid
 } from "lucide-react";
 import { 
   Select, 
@@ -31,6 +32,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import ContentGenerator from "@/components/ContentGenerator";
+import CarouselGenerator from "@/components/CarouselGenerator";
 import { format } from "date-fns";
 
 interface Post {
@@ -48,6 +50,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
+  const [showCarouselGenerator, setShowCarouselGenerator] = useState(false);
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -115,6 +118,21 @@ const Dashboard = () => {
 
     setGeneratorType("single");
     setShowGenerator(true);
+    setShowCarouselGenerator(false);
+  };
+
+  const handleCarouselGenerate = () => {
+    if (remainingPosts <= 0) {
+      toast({
+        title: "Post Limit Reached",
+        description: "You've reached your monthly post limit. Please upgrade your plan for more posts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowCarouselGenerator(true);
+    setShowGenerator(false);
   };
 
   const handleEditPost = (post: Post) => {
@@ -242,10 +260,14 @@ const Dashboard = () => {
               Welcome back, {user?.name}! Here's what's happening with your content.
             </p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <Button variant="outline" onClick={() => handleQuickGenerate()}>
               <Plus className="mr-2 h-4 w-4" />
               Quick Post
+            </Button>
+            <Button variant="outline" onClick={handleCarouselGenerate}>
+              <LayoutGrid className="mr-2 h-4 w-4" />
+              Carousel
             </Button>
             <Button onClick={() => setShowGenerator(true)}>
               <Sparkles className="mr-2 h-4 w-4" />
@@ -276,6 +298,10 @@ const Dashboard = () => {
             onClose={() => setShowGenerator(false)} 
             initialTopic={generatorTopic}
             initialType={generatorType}
+          />
+        ) : showCarouselGenerator ? (
+          <CarouselGenerator 
+            onClose={() => setShowCarouselGenerator(false)} 
           />
         ) : (
           <>

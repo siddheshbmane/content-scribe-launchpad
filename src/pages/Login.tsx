@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Linkedin } from "lucide-react";
+import { Linkedin, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
@@ -39,7 +39,13 @@ const Login = () => {
 
     try {
       await loginWithLinkedIn();
-      navigate("/dashboard");
+      // Check if user needs to complete onboarding
+      const hasCompletedOnboarding = localStorage.getItem("hasCompletedOnboarding");
+      if (hasCompletedOnboarding === "true") {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
     } catch (err) {
       setError("Failed to login with LinkedIn");
       toast({
@@ -57,7 +63,7 @@ const Login = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="h-12 w-12 bg-linkedin-primary rounded-md flex items-center justify-center">
-            <span className="text-white font-bold text-xl">CS</span>
+            <span className="text-white font-bold text-xl">LI</span>
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -79,89 +85,88 @@ const Login = () => {
             </Alert>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Demo: user@example.com or admin@example.com
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Demo password: password
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-linkedin-primary focus:ring-linkedin-primary border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <a href="#" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-
+          <div className="space-y-6">
             <Button
-              type="submit"
+              className="w-full flex items-center justify-center"
+              onClick={handleLinkedInLogin}
               disabled={isSubmitting}
-              className="w-full"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              <Linkedin className="w-5 h-5 mr-2" />
+              Sign in with LinkedIn
             </Button>
-          </form>
 
-          <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white text-gray-500">Or continue with email</span>
               </div>
             </div>
 
-            <div className="mt-6">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div>
+                <Label htmlFor="email">Email address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Demo: user@example.com or admin@example.com
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Demo password: password
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-linkedin-primary focus:ring-linkedin-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                    Remember me
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <a href="#" className="font-medium text-linkedin-primary hover:text-linkedin-dark">
+                    Forgot password?
+                  </a>
+                </div>
+              </div>
+
               <Button
-                variant="outline"
-                className="w-full flex items-center justify-center"
-                onClick={handleLinkedInLogin}
+                type="submit"
                 disabled={isSubmitting}
+                className="w-full"
+                variant="outline"
               >
-                <Linkedin className="w-5 h-5 mr-2 text-linkedin-primary" />
-                Sign in with LinkedIn
+                <Mail className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Signing in..." : "Sign in with Email"}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       </div>
