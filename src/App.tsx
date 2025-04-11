@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import Onboarding from "./pages/Onboarding";
+import CarouselEditor from "./pages/CarouselEditor";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Calendar />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/carousel-editor" 
+                element={
+                  <ProtectedRoute>
+                    <CarouselEditor />
                   </ProtectedRoute>
                 }
               />
