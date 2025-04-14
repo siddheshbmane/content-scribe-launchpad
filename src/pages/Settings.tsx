@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -13,7 +14,8 @@ import { usePlan, PlanType } from "@/contexts/PlanContext";
 import ApiKeySettings from "@/components/ApiKeySettings";
 
 const Settings = () => {
-  const { plan, setPlan, hasCustomApiKeys } = usePlan();
+  const { userPlan, plans, upgradePlan, canUseCustomApiKey } = usePlan();
+  const { toast } = useToast();
   
   const [profile, setProfile] = useState({
     name: "John Doe",
@@ -30,7 +32,7 @@ const Settings = () => {
   });
   
   const [billing, setBilling] = useState({
-    plan: plan,
+    plan: userPlan?.planType || "free",
     card: "**** **** **** 4242",
     expiry: "12/25",
   });
@@ -42,11 +44,11 @@ const Settings = () => {
   });
   
   const updatePlan = (newPlan: PlanType) => {
-    setPlan(newPlan);
+    upgradePlan(newPlan);
     setBilling(prev => ({ ...prev, plan: newPlan }));
     toast({
       title: "Plan Updated",
-      description: `Your plan has been updated to ${newPlan}.`,
+      description: `Your plan has been updated to ${plans[newPlan].name}.`,
     });
   };
   
@@ -197,9 +199,9 @@ const Settings = () => {
                   </div>
                   <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <ul className="space-y-2 mb-4 text-sm">
-                    <li>• 2 AI posts per month</li>
-                    <li>• Watermarked images</li>
-                    <li>• No publishing</li>
+                    <li>• {plans.free.postsPerMonth} posts per month</li>
+                    <li>• {plans.free.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
+                    <li>• Basic scheduling</li>
                   </ul>
                   <Button
                     variant={billing.plan === 'free' ? "outline" : "default"}
@@ -218,9 +220,9 @@ const Settings = () => {
                   </div>
                   <p className="text-2xl font-bold mb-2">$10<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <ul className="space-y-2 mb-4 text-sm">
-                    <li>• 10 AI posts per month</li>
-                    <li>• Watermarked images</li>
-                    <li>• Basic publishing</li>
+                    <li>• {plans.basic.postsPerMonth} posts per month</li>
+                    <li>• {plans.basic.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
+                    <li>• Basic scheduling</li>
                   </ul>
                   <Button
                     variant={billing.plan === 'basic' ? "outline" : "default"}
@@ -239,9 +241,9 @@ const Settings = () => {
                   </div>
                   <p className="text-2xl font-bold mb-2">$29<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <ul className="space-y-2 mb-4 text-sm">
-                    <li>• 30 AI posts per month</li>
-                    <li>• Image carousel creation</li>
-                    <li>• Post scheduling</li>
+                    <li>• {plans.pro.postsPerMonth} posts per month</li>
+                    <li>• {plans.pro.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
+                    <li>• Calendar scheduling</li>
                   </ul>
                   <Button
                     variant={billing.plan === 'pro' ? "outline" : "default"}
@@ -261,16 +263,16 @@ const Settings = () => {
                   <p className="text-2xl font-bold mb-2">$49<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <div className="grid md:grid-cols-3 gap-4 mb-4">
                     <ul className="space-y-2 text-sm">
-                      <li>• Unlimited AI posts</li>
+                      <li>• {plans.proPlus.postsPerMonth} posts per month</li>
                       <li>• Priority support</li>
                     </ul>
                     <ul className="space-y-2 text-sm">
-                      <li>• Custom API keys</li>
+                      <li>• {plans.proPlus.customApiKeyEnabled ? 'Custom API keys' : 'No custom API keys'}</li>
                       <li>• Advanced analytics</li>
                     </ul>
                     <ul className="space-y-2 text-sm">
-                      <li>• White-label exports</li>
-                      <li>• Beta feature access</li>
+                      <li>• {plans.proPlus.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
+                      <li>• Calendar scheduling</li>
                     </ul>
                   </div>
                   <Button
@@ -294,8 +296,8 @@ const Settings = () => {
                       <span className="text-xs font-medium">VISA</span>
                     </div>
                     <div>
-                      <p className="font-medium">{billing.card}</p>
-                      <p className="text-xs text-muted-foreground">Expires {billing.expiry}</p>
+                      <p className="font-medium">**** **** **** 4242</p>
+                      <p className="text-xs text-muted-foreground">Expires 12/25</p>
                     </div>
                   </div>
                   <Button variant="outline" size="sm">Update</Button>
@@ -316,7 +318,7 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="api" className="space-y-6">
-            <ApiKeySettings canUseCustomApiKey={hasCustomApiKeys} />
+            <ApiKeySettings canUseCustomApiKey={canUseCustomApiKey} />
           </TabsContent>
           
           <TabsContent value="notifications" className="space-y-6">

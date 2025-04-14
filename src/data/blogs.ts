@@ -4,156 +4,119 @@ import { faker } from "@faker-js/faker";
 export interface BlogPost {
   id: string;
   title: string;
+  slug: string;
   excerpt: string;
   content: string;
+  imageUrl: string;
+  category: string;
+  tags: string[];
   author: {
     name: string;
     avatar: string;
     title: string;
   };
+  readingTimeMinutes: number;
   publishedDate: string;
-  readTime: number;
-  category: string;
-  tags: string[];
-  imageUrl: string;
-  slug: string;
 }
 
-// Categories focused on LinkedIn and content creation
-const categories = [
+// Categories for the blog posts
+export const categories = [
   "LinkedIn Strategy",
   "Content Creation",
   "Personal Branding",
-  "AI Writing",
-  "Social Media Growth",
+  "AI Tools",
   "Career Development",
-  "Thought Leadership",
-  "Digital Marketing",
+  "Social Media",
   "Networking",
-  "Professional Growth"
+  "Thought Leadership"
 ];
 
-// Tags related to LinkedIn content creation and AI
-const allTags = [
-  "LinkedIn", "ContentCreation", "PersonalBranding", "AIWriting", "SocialMedia",
-  "ThoughtLeadership", "ContentStrategy", "DigitalMarketing", "CareerGrowth",
-  "Networking", "ContentCalendar", "EngagementStrategy", "ProfileOptimization",
-  "LeadGeneration", "B2BMarketing", "ProfessionalDevelopment", "AIPrompts",
-  "ContentAutomation", "PersonalizedContent", "DataDrivenContent"
+// Tags for the blog posts
+export const tags = [
+  "ai-content",
+  "linkedin",
+  "personal-branding",
+  "content-creation",
+  "career-tips",
+  "social-media",
+  "networking",
+  "professional-growth",
+  "thought-leadership",
+  "engagement",
+  "storytelling",
+  "content-strategy",
+  "career-advice",
+  "productivity",
+  "communication",
+  "professional-presence",
+  "digital-marketing",
+  "ai-tools",
+  "writing-tips",
+  "personal-development"
 ];
 
-// LinkedIn-specific blog post titles
-const titles = [
-  "10 AI Prompts That Will Transform Your LinkedIn Content",
-  "How to Use AI to Create a Month's Worth of LinkedIn Content in 30 Minutes",
-  "The Psychology Behind High-Performing LinkedIn Posts",
-  "5 LinkedIn Content Formats That Generate More Leads",
-  "How to Craft the Perfect LinkedIn Profile With AI Assistance",
-  "Content Calendar Strategies: Planning Your LinkedIn Presence",
-  "From Zero to Influencer: Building Authority on LinkedIn",
-  "The Science of LinkedIn Algorithms: What Makes Content Go Viral",
-  "Using AI to Analyze Your LinkedIn Performance Metrics",
-  "How to Write LinkedIn Posts That Convert Connections to Clients",
-  "Personal Branding on LinkedIn: Authenticity in the Age of AI",
-  "Creating Thought Leadership Content Without Spending Hours Writing",
-  "LinkedIn Storytelling: Crafting Narratives That Resonate",
-  "Content Repurposing: Turning One Idea Into a Month of LinkedIn Posts",
-  "AI-Assisted Research: Finding Trending Topics for Your LinkedIn Content",
-  "The Art of Engagement: How to Spark Meaningful Conversations on LinkedIn",
-  "LinkedIn Carousels: Design Tips for Higher Engagement",
-  "Ethical Considerations When Using AI for Content Creation",
-  "Building a Content Strategy That Aligns With Your Career Goals",
-  "The Ultimate Guide to LinkedIn Polls: Boosting Engagement and Gathering Insights"
-];
-
-// Generate realistic article intros about LinkedIn content creation
-function generateContent(title: string, category: string) {
-  const intros = [
-    `LinkedIn has become the premier platform for professionals looking to establish their personal brand and authority. In this comprehensive guide, we'll explore how AI-powered tools can dramatically enhance your LinkedIn presence through strategic content creation.\n\n`,
-    
-    `Creating engaging content consistently is one of the biggest challenges faced by professionals on LinkedIn. Fortunately, AI content generation tools have revolutionized how we approach this challenge.\n\n`,
-    
-    `Standing out on LinkedIn requires more than just occasional posting—it demands a strategic approach to content creation that resonates with your target audience while showcasing your expertise.\n\n`,
-    
-    `The intersection of artificial intelligence and content creation has opened up unprecedented opportunities for LinkedIn users looking to build their personal brand without spending hours crafting posts.\n\n`,
-    
-    `LinkedIn's algorithm favors consistent, engaging content that creates meaningful interactions. Leveraging AI tools can help you meet these demands while maintaining authenticity in your voice.\n\n`
-  ];
+// Generate 100+ blog posts
+export const blogPosts: BlogPost[] = Array.from({ length: 120 }, (_, index) => {
+  const title = faker.helpers.arrayElement([
+    `${faker.number.int({ min: 5, max: 10 })} AI Prompts to Boost Your LinkedIn Engagement`,
+    `How to Use ${faker.company.buzzNoun()} in Your LinkedIn Strategy`,
+    `The Ultimate Guide to ${faker.company.buzzAdjective()} LinkedIn Content`,
+    `Why ${faker.company.buzzVerb()} Is Essential for Your Professional Brand`,
+    `${faker.number.int({ min: 3, max: 7 })} Ways AI Can Transform Your LinkedIn Presence`,
+    `From Zero to Hero: Building a ${faker.company.buzzAdjective()} LinkedIn Profile`,
+    `The Psychology Behind Viral LinkedIn Posts: ${faker.company.buzzNoun()}`,
+    `${faker.company.buzzAdjective()} Content Creation Strategies for LinkedIn in ${new Date().getFullYear()}`,
+    `LinkedIn or ${faker.helpers.arrayElement(["Twitter", "Instagram", "TikTok", "Facebook"])}? Where Professionals Should Focus`,
+    `How I Generated ${faker.number.int({ min: 100, max: 500 })}% More Engagement with AI Content Tools`,
+  ]);
   
-  const bodyParagraphs = [
-    `## Understanding LinkedIn's Algorithm\n\nLinkedIn's algorithm prioritizes content that generates engagement quickly after posting. This is why timing your posts and using AI to optimize your content can significantly impact your reach. The key factors influencing the algorithm include:\n\n- Initial engagement rate within the first hour\n- Quality of interactions (comments over likes)\n- Relevance to your professional network\n- Content freshness and originality\n\nBy using AI tools to analyze these factors, you can craft content that's specifically designed to perform well within these parameters.\n\n`,
-    
-    `## Crafting AI-Enhanced LinkedIn Posts\n\nThe best AI-generated content doesn't replace your voice—it enhances it. Here's a step-by-step approach to using AI effectively for LinkedIn:\n\n1. Start with your core message or insight\n2. Use AI to expand on your ideas and suggest different formats\n3. Edit the generated content to ensure it maintains your authentic voice\n4. Add personal anecdotes or experiences that AI can't replicate\n5. Optimize the final post with AI-suggested hashtags and calls to action\n\nThis balanced approach ensures your content remains authentic while benefiting from AI's efficiency.\n\n`,
-    
-    `## Content Calendar Strategy\n\nConsistency is key on LinkedIn, and AI can help you maintain a robust content calendar without burnout. Consider this weekly framework:\n\n- **Monday**: Industry insights or trends (AI-researched and summarized)\n- **Wednesday**: Personal story or case study (human-written core with AI enhancement)\n- **Friday**: Educational content or how-to post (AI-structured with your expertise)\n\nThis balanced approach ensures regular posting while maintaining quality and authenticity.\n\n`,
-    
-    `## Measuring Success and Iterating\n\nAI tools aren't just for content creation—they're invaluable for analyzing performance as well. Key metrics to track include:\n\n- Engagement rate (compared to your baseline)\n- Follower growth rate\n- Profile views and connection requests\n- Comment quality and depth\n- Lead generation and business opportunities\n\nBy feeding this data back into your AI tools, you can continuously refine your approach based on what resonates with your audience.\n\n`,
-    
-    `## Ethical Considerations\n\nAs AI becomes more integrated into content creation, ethical considerations become increasingly important. Best practices include:\n\n- Transparently disclose when AI has assisted with content creation\n- Never use AI to fabricate experiences or credentials\n- Ensure all facts and statistics are verified by human oversight\n- Maintain a balance between AI efficiency and human creativity\n\nBy adhering to these principles, you can leverage AI while maintaining trust with your audience.\n\n`
-  ];
+  const slug = title
+    .toLowerCase()
+    .replace(/[^\w\s]/gi, '')
+    .replace(/\s+/g, '-');
   
-  const conclusions = [
-    `## Looking Ahead\n\nAs AI content tools continue to evolve, the professionals who thrive on LinkedIn will be those who strategically combine technological efficiency with genuine human connection. The future of LinkedIn isn't about replacing human creativity but enhancing it through intelligent tools that free up time for more meaningful engagement.\n\n`,
-    
-    `## Final Thoughts\n\nAI-powered content creation isn't about removing the human element from LinkedIn—it's about amplifying your voice and extending your reach while maintaining authenticity. By thoughtfully integrating these tools into your LinkedIn strategy, you can build a more consistent, engaging presence that drives real business results.\n\n`,
-    
-    `## The Path Forward\n\nAs you implement these AI-enhanced strategies for your LinkedIn content, remember that the technology is meant to serve your goals, not define them. Start with clarity about what you want to achieve on the platform, then leverage AI tools to help you get there more efficiently while staying true to your professional voice.\n\n`
-  ];
+  const category = faker.helpers.arrayElement(categories);
+  const numTags = faker.number.int({ min: 2, max: 5 });
+  const selectedTags = faker.helpers.arrayElements(tags, numTags);
   
-  return `${intros[Math.floor(Math.random() * intros.length)]}
-${bodyParagraphs[Math.floor(Math.random() * bodyParagraphs.length)]}
-${bodyParagraphs[Math.floor(Math.random() * bodyParagraphs.length)]}
-${bodyParagraphs[Math.floor(Math.random() * bodyParagraphs.length)]}
-${conclusions[Math.floor(Math.random() * conclusions.length)]}
-
-*This article was crafted to help you maximize your LinkedIn presence using AI-powered content creation tools. For more insights, follow our blog or try ContentScribe today.*`;
-}
-
-// Function to generate a realistic blog post
-function generateBlogPost(index: number): BlogPost {
-  const title = titles[index % titles.length] + (index >= titles.length ? ` - Part ${Math.floor(index / titles.length) + 1}` : "");
-  const category = categories[Math.floor(Math.random() * categories.length)];
+  const readingTime = faker.number.int({ min: 3, max: 12 });
   
-  // Generate 3-5 random tags including the category
-  const numTags = faker.number.int({ min: 2, max: 4 });
-  const tags = [category.replace(" ", "")];
-  for (let i = 0; i < numTags; i++) {
-    const tag = allTags[Math.floor(Math.random() * allTags.length)];
-    if (!tags.includes(tag)) {
-      tags.push(tag);
-    }
-  }
+  const authorName = faker.person.fullName();
+  const authorTitle = faker.helpers.arrayElement([
+    "LinkedIn Expert",
+    "Content Strategist",
+    "AI Specialist",
+    "Career Coach",
+    "Digital Marketer",
+    "Social Media Manager",
+    "Personal Branding Consultant",
+    "Professional Development Advisor"
+  ]);
   
-  const content = generateContent(title, category);
-  const excerpt = content.substring(0, 150) + "...";
+  const publishedDate = faker.date.between({
+    from: '2023-01-01T00:00:00.000Z',
+    to: new Date()
+  }).toISOString();
   
-  // Generate a realistic publication date (within the last year)
-  const publishedDate = faker.date.past({ years: 1 }).toISOString();
-  
-  // Estimate read time based on content length (roughly 200 words per minute)
-  const wordCount = content.split(' ').length;
-  const readTime = Math.max(3, Math.round(wordCount / 200));
+  const imageNumber = (index % 15) + 1; // Cycling through 15 images
   
   return {
     id: faker.string.uuid(),
     title,
-    excerpt,
-    content,
-    author: {
-      name: faker.person.fullName(),
-      avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`,
-      title: faker.person.jobTitle()
-    },
-    publishedDate,
-    readTime,
+    slug,
+    excerpt: faker.lorem.paragraph(),
+    content: Array.from({ length: faker.number.int({ min: 5, max: 10 }) }, () => 
+      faker.lorem.paragraphs(faker.number.int({ min: 2, max: 5 }))
+    ).join('\n\n'),
+    imageUrl: `https://source.unsplash.com/random/800x500?linkedin,professional,${index}`,
     category,
-    tags,
-    imageUrl: `https://source.unsplash.com/random/800x400?linkedin,content,${category.toLowerCase().replace(' ', ',')}`,
-    slug: title.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-')
+    tags: selectedTags,
+    author: {
+      name: authorName,
+      avatar: `https://i.pravatar.cc/150?u=${authorName.replace(/\s/g, '')}`,
+      title: authorTitle
+    },
+    readingTimeMinutes: readingTime,
+    publishedDate
   };
-}
-
-// Generate 100+ blog posts
-const blogPosts: BlogPost[] = Array.from({ length: 120 }, (_, index) => generateBlogPost(index));
-
-export default blogPosts;
+});

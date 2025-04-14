@@ -23,7 +23,11 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     { id: "gpt3.5", label: "GPT-3.5 Turbo", description: "Fast and efficient" },
     { id: "gpt4", label: "GPT-4", description: "Most capable model" },
     { id: "gpt4o", label: "GPT-4o", description: "Latest optimized model" },
-    { id: "claude3", label: "Claude 3", description: "Alternative AI model" },
+    { id: "gpt4o-mini", label: "GPT-4o Mini", description: "Efficient optimized model" },
+    { id: "gpt4-turbo", label: "GPT-4 Turbo", description: "Fast and powerful" },
+    { id: "claude3", label: "Claude 3 Opus", description: "Anthropic's premium model" },
+    { id: "claude3-sonnet", label: "Claude 3 Sonnet", description: "Balanced performance and efficiency" },
+    { id: "claude3-haiku", label: "Claude 3 Haiku", description: "Fast and efficient responses" },
   ];
 
   return (

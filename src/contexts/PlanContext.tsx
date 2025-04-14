@@ -2,22 +2,22 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 
+export type PlanType = "free" | "basic" | "pro" | "proPlus";
+
 export interface UserPlan {
-  name: "free" | "pro" | "business";
-  postsLimit: number;
+  planType: PlanType;
   postsCreated: number;
-  imageGenerationEnabled: boolean;
-  customApiKeyEnabled: boolean;
-  calendarEnabled: boolean;
   expiresAt: string | null;
   isActive: boolean;
 }
 
 export interface PlanFeatures {
-  postsLimit: number;
+  name: string;
+  postsPerMonth: number;
   imageGenerationEnabled: boolean;
   customApiKeyEnabled: boolean;
   calendarEnabled: boolean;
+  hasImageGeneration: boolean;
   price: number;
 }
 
@@ -29,32 +29,47 @@ interface PlanContextType {
   canUseCustomApiKey: boolean;
   canCreateMorePosts: boolean;
   setPostsCreated: (count: number) => void;
-  upgradePlan: (planName: "free" | "pro" | "business") => void;
+  upgradePlan: (planName: PlanType) => void;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
 
 const PLANS: Record<string, PlanFeatures> = {
   free: {
-    postsLimit: 5,
+    name: "Free",
+    postsPerMonth: 5,
     imageGenerationEnabled: false,
     customApiKeyEnabled: false,
     calendarEnabled: false,
+    hasImageGeneration: false,
     price: 0
   },
+  basic: {
+    name: "Basic",
+    postsPerMonth: 10,
+    imageGenerationEnabled: false,
+    customApiKeyEnabled: false,
+    calendarEnabled: false,
+    hasImageGeneration: false,
+    price: 10
+  },
   pro: {
-    postsLimit: 50,
+    name: "Pro",
+    postsPerMonth: 30,
     imageGenerationEnabled: true,
     customApiKeyEnabled: false,
     calendarEnabled: true,
+    hasImageGeneration: true,
     price: 29
   },
-  business: {
-    postsLimit: 150,
+  proPlus: {
+    name: "Pro Plus",
+    postsPerMonth: 150,
     imageGenerationEnabled: true,
     customApiKeyEnabled: true,
     calendarEnabled: true,
-    price: 99
+    hasImageGeneration: true,
+    price: 49
   }
 };
 
@@ -73,12 +88,8 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Default to free plan
         const defaultPlan: UserPlan = {
-          name: "free",
-          postsLimit: PLANS.free.postsLimit,
+          planType: "free",
           postsCreated: 0,
-          imageGenerationEnabled: PLANS.free.imageGenerationEnabled,
-          customApiKeyEnabled: PLANS.free.customApiKeyEnabled,
-          calendarEnabled: PLANS.free.calendarEnabled,
           expiresAt: null,
           isActive: true
         };
@@ -103,16 +114,12 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(`plan_${user.id}`, JSON.stringify(updatedPlan));
   };
 
-  const upgradePlan = (planName: "free" | "pro" | "business") => {
+  const upgradePlan = (planType: PlanType) => {
     if (!user) return;
     
     const newPlan: UserPlan = {
-      name: planName,
-      postsLimit: PLANS[planName].postsLimit,
+      planType,
       postsCreated: userPlan?.postsCreated || 0,
-      imageGenerationEnabled: PLANS[planName].imageGenerationEnabled,
-      customApiKeyEnabled: PLANS[planName].customApiKeyEnabled,
-      calendarEnabled: PLANS[planName].calendarEnabled,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       isActive: true
     };
@@ -122,13 +129,13 @@ export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Calculate remaining posts
-  const remainingPosts = userPlan ? Math.max(0, userPlan.postsLimit - userPlan.postsCreated) : 0;
+  const remainingPosts = userPlan ? Math.max(0, PLANS[userPlan.planType].postsPerMonth - userPlan.postsCreated) : 0;
   
   // Check if user can access calendar
-  const canAccessCalendar = userPlan?.calendarEnabled || false;
+  const canAccessCalendar = userPlan ? PLANS[userPlan.planType].calendarEnabled : false;
   
   // Check if user can use custom API key
-  const canUseCustomApiKey = userPlan?.customApiKeyEnabled || false;
+  const canUseCustomApiKey = userPlan ? PLANS[userPlan.planType].customApiKeyEnabled : false;
   
   // Check if user can create more posts
   const canCreateMorePosts = remainingPosts > 0;

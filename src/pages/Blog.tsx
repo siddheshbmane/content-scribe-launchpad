@@ -239,7 +239,7 @@ const Blog = () => {
                           <CardFooter className="flex justify-between items-center text-xs text-gray-500 pt-0">
                             <div className="flex items-center">
                               <Calendar className="h-3 w-3 mr-1" />
-                              <span>{format(new Date(post.publishedAt), 'MMM d, yyyy')}</span>
+                              <span>{format(new Date(post.publishedDate), 'MMM d, yyyy')}</span>
                             </div>
                             <Link to={`/blog/${post.slug}`} className="text-linkedin-primary font-medium hover:underline">
                               Read more

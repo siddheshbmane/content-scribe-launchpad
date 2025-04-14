@@ -17,7 +17,15 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ value, onChange }) => {
     { id: "inspirational", label: "Inspirational", description: "Motivational and uplifting" },
     { id: "authoritative", label: "Authoritative", description: "Expert and commanding" },
     { id: "storytelling", label: "Storytelling", description: "Narrative and engaging" },
-    { id: "humorous", label: "Humorous", description: "Light-hearted and funny" }
+    { id: "humorous", label: "Humorous", description: "Light-hearted and funny" },
+    { id: "analytical", label: "Analytical", description: "Data-driven and logical" },
+    { id: "empathetic", label: "Empathetic", description: "Understanding and supportive" },
+    { id: "persuasive", label: "Persuasive", description: "Convincing and influential" },
+    { id: "controversial", label: "Controversial", description: "Thought-provoking and debatable" },
+    { id: "reflective", label: "Reflective", description: "Thoughtful and introspective" },
+    { id: "visionary", label: "Visionary", description: "Forward-thinking and innovative" },
+    { id: "technical", label: "Technical", description: "Specialized and detailed" },
+    { id: "conversational", label: "Conversational", description: "Friendly and approachable" }
   ];
 
   return (
@@ -26,7 +34,7 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ value, onChange }) => {
       <RadioGroup
         value={value}
         onValueChange={onChange}
-        className="grid grid-cols-1 md:grid-cols-2 gap-2"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
       >
         {tones.map((tone) => (
           <div

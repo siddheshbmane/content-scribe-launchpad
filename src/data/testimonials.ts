@@ -4,68 +4,166 @@ import { faker } from "@faker-js/faker";
 export interface Testimonial {
   id: string;
   name: string;
-  position: string;
+  title: string;
   company: string;
   content: string;
   rating: number;
-  avatarUrl: string;
+  avatar: string;
 }
 
-// Function to generate a realistic testimonial
-function generateTestimonial(): Testimonial {
-  const firstName = faker.person.firstName();
-  const lastName = faker.person.lastName();
-  
-  const positions = [
-    "Marketing Director", "Content Manager", "Brand Strategist", "Social Media Specialist",
-    "Communications Manager", "Digital Marketing Lead", "VP of Marketing", "Marketing Consultant",
-    "LinkedIn Growth Specialist", "Content Creator", "Head of Content", "Influencer Marketing Lead",
-    "Personal Branding Coach", "Growth Marketing Manager", "SEO Specialist", "Sales Director",
-    "Chief Marketing Officer", "Entrepreneur", "Startup Founder", "Business Development Manager"
+const industries = [
+  "Marketing",
+  "Tech",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Real Estate", 
+  "Consulting",
+  "Media",
+  "Legal",
+  "Non-profit",
+  "E-commerce",
+  "Manufacturing"
+];
+
+const jobTitles = {
+  "Marketing": ["Marketing Manager", "CMO", "Brand Strategist", "Content Director", "Social Media Manager"],
+  "Tech": ["CTO", "Software Engineer", "Product Manager", "IT Director", "Data Scientist"],
+  "Finance": ["Financial Analyst", "CFO", "Investment Manager", "Accountant", "Financial Advisor"],
+  "Healthcare": ["Medical Director", "Physician", "Healthcare Administrator", "Nurse Manager", "Research Director"],
+  "Education": ["Professor", "Principal", "Academic Director", "Education Consultant", "Dean"],
+  "Real Estate": ["Real Estate Agent", "Property Manager", "Real Estate Investor", "Broker", "Development Director"],
+  "Consulting": ["Management Consultant", "Strategy Consultant", "Business Analyst", "Consulting Partner", "Advisory Director"],
+  "Media": ["Media Director", "Editor", "Content Creator", "Journalist", "Producer"],
+  "Legal": ["Attorney", "Legal Counsel", "Partner", "Legal Director", "Compliance Officer"],
+  "Non-profit": ["Executive Director", "Program Manager", "Fundraising Director", "Outreach Coordinator", "Volunteer Manager"],
+  "E-commerce": ["E-commerce Manager", "Digital Retail Director", "Online Store Manager", "E-commerce Analyst", "Marketplace Specialist"],
+  "Manufacturing": ["Operations Manager", "Production Director", "Plant Manager", "Quality Control Manager", "Supply Chain Director"]
+};
+
+const generateTestimonialContent = () => {
+  const contentTemplates = [
+    "ContentScribe has completely transformed how I approach LinkedIn content creation. {{benefit}}. The AI-generated posts are surprisingly insightful and have helped me {{result}}. I can't imagine going back to my old workflow.",
+    
+    "As a busy {{profession}}, I never had time to maintain a consistent LinkedIn presence. ContentScribe changed everything. {{benefit}} and the calendar feature helps me {{result}}. Absolutely worth every penny!",
+    
+    "I was skeptical about AI content tools, but ContentScribe proved me wrong. {{benefit}} while still maintaining my authentic voice. I've seen {{result}} since I started using it {{timeframe}} ago.",
+    
+    "ContentScribe is a game-changer for my personal brand. The {{feature}} feature is incredibly powerful and has helped me {{benefit}}. My engagement has {{result}} and I'm getting more inbound opportunities than ever.",
+    
+    "After trying numerous content tools, ContentScribe stands out as the clear winner. {{benefit}} without sacrificing quality. I've been able to {{result}}, which has opened up new career opportunities.",
+    
+    "The team at ContentScribe has thought of everything. From {{feature}} to the intuitive interface, this tool has helped me {{benefit}}. I've received countless compliments on my LinkedIn content and have {{result}}.",
+    
+    "ContentScribe has become an essential part of my professional toolkit. As someone who {{challenge}}, I appreciate how it helps me {{benefit}}. Since using it, I've {{result}} and received positive feedback from my network.",
+    
+    "I can't say enough good things about ContentScribe. The {{feature}} feature alone is worth the subscription. It's helped me {{benefit}} and I've seen {{result}} in just {{timeframe}}.",
+    
+    "ContentScribe delivers exactly what it promises. I've been able to {{benefit}} while maintaining my authentic voice. The most impressive result has been {{result}}, which has helped me grow my professional network significantly."
   ];
   
-  const companies = [
-    "TechGrowth", "InnovateCorp", "Digital Dynamics", "FutureBrands", "MarketWave",
-    "Nexus Technologies", "Elevate Media", "PinnacleGroup", "StrategyLabs", "VisionaryTech",
-    "GrowthForge", "ContentPeak", "LinkedIn Masters", "SocialSurge", "BrandBuilders",
-    "PrecisionMarketing", "GlobalReach", "InsightfulMedia", "SmartContent", "LeadGenPros"
+  const benefits = [
+    "It saves me hours every week",
+    "The content suggestions are incredibly relevant to my industry",
+    "I can now schedule an entire month of content in just 30 minutes",
+    "The AI understands my professional voice perfectly",
+    "It generates engaging posts that resonate with my audience",
+    "The variety of content tones helps me keep my feed interesting",
+    "I can create professional content even when I'm not feeling creative",
+    "It helps me maintain consistency without the stress"
   ];
   
-  // LinkedIn-specific positive testimonials with mentions of AI content generation
-  const testimonialContents = [
-    `ContentScribe has completely transformed how I approach LinkedIn. The AI-generated content is so natural and engaging that my engagement rates have increased by over 45% in just one month.`,
-    
-    `As a busy ${positions[Math.floor(Math.random() * positions.length)]}, I never had time to maintain a consistent LinkedIn presence. With ContentScribe, I now post 3 times a week with minimal effort, and my network is growing faster than ever.`,
-    
-    `The AI content generator understands my industry so well, it's like having a personal ghostwriter who's an expert in my field. This tool has been a game-changer for my personal brand.`,
-    
-    `I was skeptical about AI-generated content at first, but ContentScribe has made me a believer. The quality of posts it creates is exceptional, and I've received countless compliments on my "writing style."`,
-    
-    `ContentScribe doesn't just save me time - it makes me look better on LinkedIn. The content is more engaging and professional than what I was creating myself. Worth every penny!`,
-    
-    `My LinkedIn profile was practically dormant before I found ContentScribe. Now I'm posting consistently, engaging with my network, and have even landed two major speaking opportunities thanks to my increased visibility.`,
-    
-    `What impresses me most about ContentScribe is how it captures my voice. It doesn't feel like generic AI content - it feels like ME, just more eloquent and consistent.`,
-    
-    `As someone who struggles with writer's block, ContentScribe has been a lifesaver. It gives me perfect starting points that I can tweak, and the calendar feature ensures I never miss posting days.`,
-    
-    `I've tried other LinkedIn content tools, but nothing comes close to ContentScribe. The AI understands professional content better than any other solution I've used.`,
-    
-    `Our entire marketing team uses ContentScribe now, and it's brought consistency to our brand voice across all our employees' LinkedIn accounts. An essential tool for modern businesses.`
+  const results = [
+    "increase my engagement by over 200%",
+    "build a more meaningful professional network",
+    "position myself as a thought leader in my industry",
+    "attract new career opportunities I wouldn't have found otherwise",
+    "grow my following from a few hundred to over 5,000 connections",
+    "consistently share valuable insights with my network",
+    "develop a strong personal brand that stands out",
+    "receive direct messages from potential clients every week"
   ];
+  
+  const features = [
+    "content calendar",
+    "tone adjustment",
+    "AI post generation",
+    "image creation",
+    "topic suggestion",
+    "engagement analytics",
+    "customization options",
+    "scheduling automation"
+  ];
+  
+  const challenges = [
+    "struggles with writer's block",
+    "juggles multiple responsibilities",
+    "never considered myself a strong writer",
+    "found it hard to be consistent on social media",
+    "was never sure what to post about",
+    "lacked confidence in my content",
+    "couldn't find time to maintain my professional presence"
+  ];
+  
+  const timeframes = [
+    "3 months",
+    "6 weeks",
+    "just a month",
+    "60 days",
+    "a quarter"
+  ];
+  
+  const professions = [
+    "marketing executive",
+    "sales professional",
+    "entrepreneur",
+    "consultant",
+    "team leader",
+    "startup founder",
+    "creative professional",
+    "financial advisor"
+  ];
+  
+  // Select a random template
+  let template = faker.helpers.arrayElement(contentTemplates);
+  
+  // Replace placeholders with random elements
+  template = template.replace("{{benefit}}", faker.helpers.arrayElement(benefits));
+  template = template.replace("{{result}}", faker.helpers.arrayElement(results));
+  
+  // Replace additional placeholders if they exist in the selected template
+  if (template.includes("{{feature}}")) {
+    template = template.replace("{{feature}}", faker.helpers.arrayElement(features));
+  }
+  
+  if (template.includes("{{challenge}}")) {
+    template = template.replace("{{challenge}}", faker.helpers.arrayElement(challenges));
+  }
+  
+  if (template.includes("{{timeframe}}")) {
+    template = template.replace("{{timeframe}}", faker.helpers.arrayElement(timeframes));
+  }
+  
+  if (template.includes("{{profession}}")) {
+    template = template.replace("{{profession}}", faker.helpers.arrayElement(professions));
+  }
+  
+  return template;
+};
+
+// Generate 100+ testimonials
+export const testimonials: Testimonial[] = Array.from({ length: 130 }, () => {
+  const industry = faker.helpers.arrayElement(industries);
+  const title = faker.helpers.arrayElement(jobTitles[industry as keyof typeof jobTitles]);
+  const name = faker.person.fullName();
   
   return {
     id: faker.string.uuid(),
-    name: `${firstName} ${lastName}`,
-    position: positions[Math.floor(Math.random() * positions.length)],
-    company: companies[Math.floor(Math.random() * companies.length)],
-    content: testimonialContents[Math.floor(Math.random() * testimonialContents.length)],
-    rating: 5, // All 5-star ratings as requested
-    avatarUrl: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+    name,
+    title,
+    company: faker.company.name(),
+    content: generateTestimonialContent(),
+    rating: faker.helpers.rangeToNumber({ min: 4, max: 5 }),
+    avatar: `https://i.pravatar.cc/150?u=${name.replace(/\s/g, '')}`
   };
-}
-
-// Generate 100+ testimonials
-const testimonials: Testimonial[] = Array.from({ length: 120 }, () => generateTestimonial());
-
-export default testimonials;
+});
