@@ -28,6 +28,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     { id: "claude3", label: "Claude 3 Opus", description: "Anthropic's premium model" },
     { id: "claude3-sonnet", label: "Claude 3 Sonnet", description: "Balanced performance and efficiency" },
     { id: "claude3-haiku", label: "Claude 3 Haiku", description: "Fast and efficient responses" },
+    { id: "gemini-pro", label: "Gemini Pro", description: "Google's advanced language model" },
+    { id: "gemini-ultra", label: "Gemini Ultra", description: "Google's most capable model" },
+    { id: "llama3-70b", label: "Llama 3 70B", description: "Meta's open model" },
+    { id: "mistral-large", label: "Mistral Large", description: "Powerful open source model" },
   ];
 
   return (

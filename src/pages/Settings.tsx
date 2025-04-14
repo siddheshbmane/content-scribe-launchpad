@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,18 +17,26 @@ const Settings = () => {
   const { userPlan, plans, upgradePlan, canUseCustomApiKey } = usePlan();
   const { toast } = useToast();
   
-  const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    jobTitle: "Marketing Manager",
-    company: "Acme Inc.",
-    industry: "Technology",
+  // Load profile from localStorage on component mount
+  const [profile, setProfile] = useState(() => {
+    const savedProfile = localStorage.getItem('userProfile');
+    return savedProfile ? JSON.parse(savedProfile) : {
+      name: "John Doe",
+      email: "john.doe@example.com",
+      jobTitle: "Marketing Manager",
+      company: "Acme Inc.",
+      industry: "Technology",
+    };
   });
   
-  const [notifications, setNotifications] = useState({
-    emailDigest: true,
-    contentSuggestions: true,
-    accountAlerts: true,
+  // Load notifications settings from localStorage
+  const [notifications, setNotifications] = useState(() => {
+    const savedNotifications = localStorage.getItem('userNotifications');
+    return savedNotifications ? JSON.parse(savedNotifications) : {
+      emailDigest: true,
+      contentSuggestions: true,
+      accountAlerts: true,
+    };
   });
   
   const [billing, setBilling] = useState({
@@ -42,6 +50,16 @@ const Settings = () => {
     new: "",
     confirm: "",
   });
+
+  // Save profile to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('userProfile', JSON.stringify(profile));
+  }, [profile]);
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('userNotifications', JSON.stringify(notifications));
+  }, [notifications]);
   
   const updatePlan = (newPlan: PlanType) => {
     upgradePlan(newPlan);
@@ -54,6 +72,10 @@ const Settings = () => {
   
   const handleSubmitProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Save profile to localStorage
+    localStorage.setItem('userProfile', JSON.stringify(profile));
+    
     toast({
       title: "Profile Updated",
       description: "Your profile has been updated successfully.",
@@ -62,6 +84,26 @@ const Settings = () => {
   
   const handleSubmitPassword = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate password
+    if (!password.current) {
+      toast({
+        title: "Error",
+        description: "Please enter your current password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!password.new) {
+      toast({
+        title: "Error",
+        description: "Please enter a new password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (password.new !== password.confirm) {
       toast({
         title: "Error",
@@ -70,17 +112,41 @@ const Settings = () => {
       });
       return;
     }
+    
+    // In a real app, this would call an API to update the password
+    // For now, just show success toast and reset form
     toast({
       title: "Password Updated",
       description: "Your password has been updated successfully.",
     });
+    
+    // Reset password fields
+    setPassword({
+      current: "",
+      new: "",
+      confirm: "",
+    });
   };
   
   const handleNotificationChange = (checked: boolean, key: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [key]: checked }));
+    setNotifications(prev => {
+      const updated = { ...prev, [key]: checked };
+      // Save to localStorage
+      localStorage.setItem('userNotifications', JSON.stringify(updated));
+      return updated;
+    });
+    
     toast({
       title: "Notification Preferences Updated",
       description: `Your ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} preference has been updated.`,
+    });
+  };
+
+  const handleChangeEmail = () => {
+    // This would normally trigger an email verification flow
+    toast({
+      title: "Verification Email Sent",
+      description: `A verification email has been sent to ${profile.email}. Please check your inbox to confirm this change.`,
     });
   };
   
@@ -115,12 +181,20 @@ const Settings = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    />
+                    <div className="flex space-x-2">
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile.email}
+                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                      />
+                      <Button type="button" variant="outline" onClick={handleChangeEmail}>
+                        Verify
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Changing your email requires verification.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="job-title">Job Title</Label>
@@ -199,9 +273,9 @@ const Settings = () => {
                   </div>
                   <p className="text-2xl font-bold mb-2">$0<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <ul className="space-y-2 mb-4 text-sm">
-                    <li>• {plans.free.postsPerMonth} posts per month</li>
-                    <li>• {plans.free.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
-                    <li>• Basic scheduling</li>
+                    <li>• Limited posts per month</li>
+                    <li>• Basic content options</li>
+                    <li>• Simple scheduling</li>
                   </ul>
                   <Button
                     variant={billing.plan === 'free' ? "outline" : "default"}
@@ -220,9 +294,9 @@ const Settings = () => {
                   </div>
                   <p className="text-2xl font-bold mb-2">$10<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <ul className="space-y-2 mb-4 text-sm">
-                    <li>• {plans.basic.postsPerMonth} posts per month</li>
-                    <li>• {plans.basic.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
-                    <li>• Basic scheduling</li>
+                    <li>• More posts per month</li>
+                    <li>• Enhanced content creation</li>
+                    <li>• Advanced scheduling</li>
                   </ul>
                   <Button
                     variant={billing.plan === 'basic' ? "outline" : "default"}
@@ -241,9 +315,9 @@ const Settings = () => {
                   </div>
                   <p className="text-2xl font-bold mb-2">$29<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <ul className="space-y-2 mb-4 text-sm">
-                    <li>• {plans.pro.postsPerMonth} posts per month</li>
-                    <li>• {plans.pro.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
-                    <li>• Calendar scheduling</li>
+                    <li>• More content creation options</li>
+                    <li>• Premium scheduling tools</li>
+                    <li>• Calendar view</li>
                   </ul>
                   <Button
                     variant={billing.plan === 'pro' ? "outline" : "default"}
@@ -263,15 +337,15 @@ const Settings = () => {
                   <p className="text-2xl font-bold mb-2">$49<span className="text-sm font-normal text-muted-foreground">/month</span></p>
                   <div className="grid md:grid-cols-3 gap-4 mb-4">
                     <ul className="space-y-2 text-sm">
-                      <li>• {plans.proPlus.postsPerMonth} posts per month</li>
+                      <li>• Premium content tools</li>
                       <li>• Priority support</li>
                     </ul>
                     <ul className="space-y-2 text-sm">
-                      <li>• {plans.proPlus.customApiKeyEnabled ? 'Custom API keys' : 'No custom API keys'}</li>
+                      <li>• Custom API key support</li>
                       <li>• Advanced analytics</li>
                     </ul>
                     <ul className="space-y-2 text-sm">
-                      <li>• {plans.proPlus.hasImageGeneration ? 'Image generation' : 'No image generation'}</li>
+                      <li>• Premium image tools</li>
                       <li>• Calendar scheduling</li>
                     </ul>
                   </div>
@@ -318,7 +392,31 @@ const Settings = () => {
           </TabsContent>
           
           <TabsContent value="api" className="space-y-6">
-            <ApiKeySettings canUseCustomApiKey={canUseCustomApiKey} />
+            <Card className="p-6">
+              <h3 className="text-lg font-medium mb-4">API Keys</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="openai-api-key">OpenAI API Key</Label>
+                  <Input
+                    id="openai-api-key"
+                    type="password"
+                    placeholder="sk-..."
+                    value={localStorage.getItem("openAIApiKey") || ""}
+                    onChange={(e) => {
+                      localStorage.setItem("openAIApiKey", e.target.value);
+                      toast({
+                        title: "API Key Updated",
+                        description: "Your OpenAI API key has been updated.",
+                      });
+                    }}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Used for content generation and image creation. Your key is stored locally
+                    and never sent to our servers.
+                  </p>
+                </div>
+              </div>
+            </Card>
           </TabsContent>
           
           <TabsContent value="notifications" className="space-y-6">

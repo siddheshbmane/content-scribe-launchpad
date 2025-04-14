@@ -25,7 +25,15 @@ const ToneSelector: React.FC<ToneSelectorProps> = ({ value, onChange }) => {
     { id: "reflective", label: "Reflective", description: "Thoughtful and introspective" },
     { id: "visionary", label: "Visionary", description: "Forward-thinking and innovative" },
     { id: "technical", label: "Technical", description: "Specialized and detailed" },
-    { id: "conversational", label: "Conversational", description: "Friendly and approachable" }
+    { id: "conversational", label: "Conversational", description: "Friendly and approachable" },
+    { id: "educational", label: "Educational", description: "Teaching and instructive" },
+    { id: "authentic", label: "Authentic", description: "Genuine and transparent" },
+    { id: "diplomatic", label: "Diplomatic", description: "Tactful and balanced" },
+    { id: "confident", label: "Confident", description: "Assured and self-assured" },
+    { id: "direct", label: "Direct", description: "Straightforward and to the point" },
+    { id: "intellectual", label: "Intellectual", description: "Scholarly and academic" },
+    { id: "passionate", label: "Passionate", description: "Intense and fervent" },
+    { id: "practical", label: "Practical", description: "Useful and applicable" }
   ];
 
   return (
