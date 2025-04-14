@@ -4,6 +4,13 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { usePlan } from "@/contexts/PlanContext";
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight, MoreHorizontal, Sparkles, Eye, Edit, Trash2, Copy, Loader2 } from "lucide-react";
@@ -28,6 +35,10 @@ const Calendar = () => {
   const [isAddingPost, setIsAddingPost] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewPost, setPreviewPost] = useState<Post | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   const { canAccessCalendar } = usePlan();
   const { toast } = useToast();
@@ -104,11 +115,8 @@ const Calendar = () => {
   };
 
   const handleEditPost = (post: Post) => {
-    toast({
-      title: "Edit Post",
-      description: `Editing post: ${post.title}`,
-    });
-    // In a real app, we would open the post editor with this post loaded
+    setEditingPost(post);
+    setIsEditing(true);
   };
 
   const handleDuplicatePost = (post: Post) => {
@@ -134,11 +142,24 @@ const Calendar = () => {
   };
 
   const handlePreviewPost = (post: Post) => {
-    toast({
-      title: "Preview Post",
-      description: `Previewing post: ${post.title}`,
+    setPreviewPost(post);
+    setShowPreview(true);
+  };
+
+  const formatContent = (content: string) => {
+    return content.split('\n').map((line, i) => {
+      if (line.startsWith('#')) {
+        return <h3 key={i} className="text-xl font-bold mt-4 mb-2">{line.replace('# ', '')}</h3>;
+      } else if (line.startsWith('##')) {
+        return <h4 key={i} className="text-lg font-bold mt-3 mb-1">{line.replace('## ', '')}</h4>;
+      } else if (line.match(/^\d️⃣|\-|\*/)) {
+        return <p key={i} className="my-1 ml-4">{line}</p>;
+      } else if (line.trim() === '') {
+        return <br key={i} />;
+      } else {
+        return <p key={i} className="my-2">{line}</p>;
+      }
     });
-    // In a real app, we would show a preview modal
   };
 
   const renderHeader = () => {
@@ -421,6 +442,7 @@ const Calendar = () => {
         <ContentGenerator 
           onClose={handleCloseGenerator}
           initialType="single"
+          initialDate={selectedDate || undefined}
         />
       ) : (
         <div className="space-y-4">
@@ -430,6 +452,50 @@ const Calendar = () => {
           {renderCells()}
           {renderEvents()}
         </div>
+      )}
+
+      {/* Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{previewPost?.title}</DialogTitle>
+            <DialogDescription>
+              {previewPost?.status === "draft" ? "Draft" : 
+               previewPost?.status === "scheduled" ? `Scheduled for ${new Date(previewPost.date).toLocaleDateString()}` :
+               "Published"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="bg-gray-50 p-4 rounded-md border my-2">
+            {previewPost && formatContent(previewPost.content)}
+          </div>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              Close
+            </Button>
+            <Button onClick={() => {
+              if (previewPost) {
+                setShowPreview(false);
+                handleEditPost(previewPost);
+              }
+            }}>
+              Edit Post
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      {isEditing && editingPost && (
+        <ContentGenerator 
+          onClose={() => {
+            setIsEditing(false);
+            setEditingPost(null);
+            loadPosts();
+          }}
+          initialTopic={editingPost.title}
+          initialType="single"
+          initialDate={editingPost.date}
+        />
       )}
     </DashboardLayout>
   );

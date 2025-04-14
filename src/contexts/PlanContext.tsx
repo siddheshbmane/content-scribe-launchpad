@@ -1,135 +1,160 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
-// Define the plan types
-export type PlanType = 'free' | 'basic' | 'pro' | 'proPlus';
-
-interface Plan {
-  posts: number;
-  images: boolean;
-  customKeys: boolean;
-  publishing: boolean;
-}
-
-interface UserPlan {
-  planType: PlanType;
+export interface UserPlan {
+  name: "free" | "pro" | "business";
+  postsLimit: number;
   postsCreated: number;
+  imageGenerationEnabled: boolean;
+  customApiKeyEnabled: boolean;
+  calendarEnabled: boolean;
+  expiresAt: string | null;
+  isActive: boolean;
 }
 
-interface Plans {
-  [key: string]: {
-    name: string;
-    postsPerMonth: number;
-    hasImageGeneration: boolean;
-    hasCustomApiKeys: boolean;
-    hasPublishing: boolean;
-  };
+export interface PlanFeatures {
+  postsLimit: number;
+  imageGenerationEnabled: boolean;
+  customApiKeyEnabled: boolean;
+  calendarEnabled: boolean;
+  price: number;
 }
 
 interface PlanContextType {
-  plan: PlanType;
-  setPlan: (plan: PlanType) => void;
-  postsRemaining: number;
-  setPostsRemaining: (count: number) => void;
-  postsLimit: number;
-  hasImageGeneration: boolean;
-  hasCustomApiKeys: boolean;
-  hasPublishing: boolean;
+  userPlan: UserPlan | null;
+  plans: Record<string, PlanFeatures>;
+  remainingPosts: number;
+  canAccessCalendar: boolean;
   canUseCustomApiKey: boolean;
   canCreateMorePosts: boolean;
-  canAccessCalendar: boolean;
   setPostsCreated: (count: number) => void;
-  userPlan: UserPlan | null;
-  plans: Plans;
-  remainingPosts: number;
+  upgradePlan: (planName: "free" | "pro" | "business") => void;
 }
-
-const planLimits = {
-  free: { posts: 2, images: false, customKeys: false, publishing: false },
-  basic: { posts: 10, images: false, customKeys: false, publishing: true },
-  pro: { posts: 30, images: true, customKeys: false, publishing: true },
-  proPlus: { posts: 999, images: true, customKeys: true, publishing: true },
-};
-
-const defaultPlans: Plans = {
-  free: {
-    name: "Free",
-    postsPerMonth: 2,
-    hasImageGeneration: false,
-    hasCustomApiKeys: false,
-    hasPublishing: false
-  },
-  basic: {
-    name: "Basic",
-    postsPerMonth: 10,
-    hasImageGeneration: false,
-    hasCustomApiKeys: false,
-    hasPublishing: true
-  },
-  pro: {
-    name: "Pro",
-    postsPerMonth: 30,
-    hasImageGeneration: true,
-    hasCustomApiKeys: false,
-    hasPublishing: true
-  },
-  proPlus: {
-    name: "Pro Plus",
-    postsPerMonth: 999,
-    hasImageGeneration: true,
-    hasCustomApiKeys: true,
-    hasPublishing: true
-  }
-};
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
 
-export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [plan, setPlan] = useState<PlanType>('free');
-  const [postsRemaining, setPostsRemaining] = useState(planLimits.free.posts);
-  const [postsCreated, setPostsCreated] = useState(0);
-
-  // Create a userPlan object
-  const userPlan: UserPlan = {
-    planType: plan,
-    postsCreated: postsCreated
-  };
-
-  // Update posts remaining when plan changes
-  useEffect(() => {
-    setPostsRemaining(planLimits[plan]?.posts || 0);
-  }, [plan]);
-
-  const canCreateMorePosts = postsRemaining > 0;
-  const canAccessCalendar = plan === 'pro' || plan === 'proPlus';
-  const canUseCustomApiKey = plan === 'proPlus';
-  const remainingPosts = postsRemaining;
-
-  const value = {
-    plan,
-    setPlan,
-    postsRemaining,
-    setPostsRemaining,
-    postsLimit: planLimits[plan]?.posts || 0,
-    hasImageGeneration: planLimits[plan]?.images || false,
-    hasCustomApiKeys: planLimits[plan]?.customKeys || false,
-    hasPublishing: planLimits[plan]?.publishing || false,
-    canUseCustomApiKey,
-    canCreateMorePosts,
-    canAccessCalendar,
-    setPostsCreated,
-    userPlan,
-    plans: defaultPlans,
-    remainingPosts
-  };
-
-  return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
+const PLANS: Record<string, PlanFeatures> = {
+  free: {
+    postsLimit: 5,
+    imageGenerationEnabled: false,
+    customApiKeyEnabled: false,
+    calendarEnabled: false,
+    price: 0
+  },
+  pro: {
+    postsLimit: 50,
+    imageGenerationEnabled: true,
+    customApiKeyEnabled: false,
+    calendarEnabled: true,
+    price: 29
+  },
+  business: {
+    postsLimit: 150,
+    imageGenerationEnabled: true,
+    customApiKeyEnabled: true,
+    calendarEnabled: true,
+    price: 99
+  }
 };
 
-export const usePlan = (): PlanContextType => {
+export const PlanProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
+
+  // Initialize or load user plan
+  useEffect(() => {
+    if (user) {
+      // Check if user already has a plan stored
+      const storedPlan = localStorage.getItem(`plan_${user.id}`);
+      
+      if (storedPlan) {
+        setUserPlan(JSON.parse(storedPlan));
+      } else {
+        // Default to free plan
+        const defaultPlan: UserPlan = {
+          name: "free",
+          postsLimit: PLANS.free.postsLimit,
+          postsCreated: 0,
+          imageGenerationEnabled: PLANS.free.imageGenerationEnabled,
+          customApiKeyEnabled: PLANS.free.customApiKeyEnabled,
+          calendarEnabled: PLANS.free.calendarEnabled,
+          expiresAt: null,
+          isActive: true
+        };
+        
+        setUserPlan(defaultPlan);
+        localStorage.setItem(`plan_${user.id}`, JSON.stringify(defaultPlan));
+      }
+    } else {
+      setUserPlan(null);
+    }
+  }, [user]);
+
+  const setPostsCreated = (count: number) => {
+    if (!user || !userPlan) return;
+    
+    const updatedPlan = {
+      ...userPlan,
+      postsCreated: count
+    };
+    
+    setUserPlan(updatedPlan);
+    localStorage.setItem(`plan_${user.id}`, JSON.stringify(updatedPlan));
+  };
+
+  const upgradePlan = (planName: "free" | "pro" | "business") => {
+    if (!user) return;
+    
+    const newPlan: UserPlan = {
+      name: planName,
+      postsLimit: PLANS[planName].postsLimit,
+      postsCreated: userPlan?.postsCreated || 0,
+      imageGenerationEnabled: PLANS[planName].imageGenerationEnabled,
+      customApiKeyEnabled: PLANS[planName].customApiKeyEnabled,
+      calendarEnabled: PLANS[planName].calendarEnabled,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      isActive: true
+    };
+    
+    setUserPlan(newPlan);
+    localStorage.setItem(`plan_${user.id}`, JSON.stringify(newPlan));
+  };
+
+  // Calculate remaining posts
+  const remainingPosts = userPlan ? Math.max(0, userPlan.postsLimit - userPlan.postsCreated) : 0;
+  
+  // Check if user can access calendar
+  const canAccessCalendar = userPlan?.calendarEnabled || false;
+  
+  // Check if user can use custom API key
+  const canUseCustomApiKey = userPlan?.customApiKeyEnabled || false;
+  
+  // Check if user can create more posts
+  const canCreateMorePosts = remainingPosts > 0;
+
+  return (
+    <PlanContext.Provider 
+      value={{
+        userPlan,
+        plans: PLANS,
+        remainingPosts,
+        canAccessCalendar,
+        canUseCustomApiKey,
+        canCreateMorePosts,
+        setPostsCreated,
+        upgradePlan
+      }}
+    >
+      {children}
+    </PlanContext.Provider>
+  );
+};
+
+export const usePlan = () => {
   const context = useContext(PlanContext);
   if (context === undefined) {
-    throw new Error('usePlan must be used within a PlanProvider');
+    throw new Error("usePlan must be used within a PlanProvider");
   }
   return context;
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,17 +15,20 @@ import { usePlan } from "@/contexts/PlanContext";
 import { X, Sparkles, HelpCircle, Image as ImageIcon, Wand2, Calendar, FileText, Copy, Edit, Loader2, AlertTriangle } from "lucide-react";
 import ToneSelector from "./ToneSelector";
 import ModelSelector from "./ModelSelector";
+import TopicSuggestions from "./TopicSuggestions";
 
 interface ContentGeneratorProps {
   onClose: () => void;
   initialTopic?: string;
   initialType?: "single" | "calendar";
+  initialDate?: string;
 }
 
 const ContentGenerator: React.FC<ContentGeneratorProps> = ({ 
   onClose, 
   initialTopic = "", 
-  initialType = "single"
+  initialType = "single",
+  initialDate
 }) => {
   const [topic, setTopic] = useState(initialTopic);
   const [tone, setTone] = useState("professional");
@@ -39,12 +42,13 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
   const [imageGenerating, setImageGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [imageApiKeyMissing, setImageApiKeyMissing] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<string | null>(initialDate || null);
   
   const { toast } = useToast();
   const { canUseCustomApiKey, canCreateMorePosts, setPostsCreated, userPlan } = usePlan();
 
   // Load API key from localStorage on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     const storedApiKey = localStorage.getItem("openAIApiKey");
     if (storedApiKey) {
       setApiKey(storedApiKey);
@@ -57,7 +61,12 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       `5 Ways to Master ${input} in 2025`,
       `Why ${input} Is Critical for Your Career Growth`,
       `${input}: What I Wish I Knew When Starting Out`,
-      `How to Leverage ${input} for Professional Success`
+      `How to Leverage ${input} for Professional Success`,
+      `The Future of ${input} and What It Means for You`,
+      `3 Surprising Insights About ${input} You Need to Know`,
+      `How I Transformed My Career Through ${input}`,
+      `${input}: Separating Myths from Reality`,
+      `Building a Personal Brand with ${input}`
     ];
     return titles[Math.floor(Math.random() * titles.length)];
   };
@@ -251,7 +260,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
       id: Date.now().toString(),
       title: topic ? generateTitle(topic) : "Untitled Draft",
       content: generatedContent,
-      date: new Date().toISOString(),
+      date: scheduledDate || new Date().toISOString(),
       status: "draft"
     };
     
@@ -272,16 +281,18 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
     // Get existing posts or initialize empty array
     const existingPosts = JSON.parse(localStorage.getItem('scheduledPosts') || '[]');
     
-    // Schedule date (default to tomorrow)
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Schedule date (default to tomorrow if not specified)
+    const scheduleDate = scheduledDate ? new Date(scheduledDate) : new Date();
+    if (!scheduledDate) {
+      scheduleDate.setDate(scheduleDate.getDate() + 1);
+    }
     
     // Create new scheduled post
     const newPost = {
       id: Date.now().toString(),
       title: topic ? generateTitle(topic) : "Scheduled Post",
       content: generatedContent,
-      date: tomorrow.toISOString(),
+      date: scheduleDate.toISOString(),
       status: "scheduled"
     };
     
@@ -290,7 +301,7 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
     
     toast({
       title: "Post scheduled",
-      description: "Your content has been scheduled for tomorrow!",
+      description: `Your content has been scheduled for ${scheduleDate.toLocaleDateString()}!`,
     });
     
     onClose();
@@ -367,6 +378,8 @@ const ContentGenerator: React.FC<ContentGeneratorProps> = ({
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                 />
+                
+                <TopicSuggestions onSelectTopic={setTopic} />
               </div>
               
               <div className="space-y-2">

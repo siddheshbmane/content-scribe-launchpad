@@ -106,6 +106,10 @@ const Login = () => {
     try {
       await forgotPassword(resetEmail);
       setShowResetPassword(false);
+      toast({
+        title: "Password reset email sent",
+        description: "Check your inbox for instructions to reset your password.",
+      });
     } catch (error) {
       // Error is already handled in the auth context
     } finally {

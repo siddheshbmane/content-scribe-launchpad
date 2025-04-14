@@ -179,6 +179,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // In a real app, this would send a password reset email
       toast.success("If an account exists for this email, a password reset link has been sent.");
+      
+      // For demo purposes, simulate sending an email
+      if (userExists) {
+        setTimeout(() => {
+          toast.success(`Password reset email sent to ${email}. Check your inbox.`);
+        }, 1000);
+        
+        setTimeout(() => {
+          toast.success(`Demo: Your temporary password is "resetpass123". Use this to login.`);
+        }, 3000);
+      }
+      
       return;
     } catch (error) {
       toast.error("Failed to process request. Please try again.");

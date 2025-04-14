@@ -1,11 +1,8 @@
 
-import React, { useEffect, useState } from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import React from "react";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle, Check, AlertTriangle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
 
 interface ModelSelectorProps {
   value: string;
@@ -20,109 +17,54 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   onChange,
   canUseCustomApiKey,
   apiKey,
-  onApiKeyChange
+  onApiKeyChange,
 }) => {
-  const [savedApiKey, setSavedApiKey] = useState("");
-  const [apiKeyStatus, setApiKeyStatus] = useState<"valid" | "invalid" | "untested">("untested");
-  const { toast } = useToast();
-  
-  // Load API key from localStorage on component mount
-  useEffect(() => {
-    const storedApiKey = localStorage.getItem("openAIApiKey");
-    if (storedApiKey && storedApiKey !== apiKey) {
-      setSavedApiKey(storedApiKey);
-      onApiKeyChange(storedApiKey);
-      
-      // If we have a stored API key, assume it's valid until proven otherwise
-      setApiKeyStatus("valid");
-    }
-  }, [apiKey, onApiKeyChange]);
+  const models = [
+    { id: "gpt3.5", label: "GPT-3.5 Turbo", description: "Fast and efficient" },
+    { id: "gpt4", label: "GPT-4", description: "Most capable model" },
+    { id: "gpt4o", label: "GPT-4o", description: "Latest optimized model" },
+    { id: "claude3", label: "Claude 3", description: "Alternative AI model" },
+  ];
 
-  // Save API key to localStorage when it changes
-  const handleApiKeyChange = (value: string) => {
-    onApiKeyChange(value);
-    setApiKeyStatus("untested");
-    
-    if (value) {
-      // Basic OpenAI API key validation
-      if (value.startsWith("sk-") && value.length > 20) {
-        localStorage.setItem("openAIApiKey", value);
-        setSavedApiKey(value);
-        setApiKeyStatus("valid");
-        
-        toast({
-          title: "API key saved",
-          description: "Your OpenAI API key has been saved securely.",
-        });
-      } else {
-        setApiKeyStatus("invalid");
-        
-        toast({
-          title: "Invalid API key",
-          description: "Please enter a valid OpenAI API key starting with 'sk-'.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-  
   return (
     <div className="space-y-4">
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an AI model" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="gpt3.5">GPT-3.5 Turbo</SelectItem>
-          <SelectItem value="gpt4" disabled={!canUseCustomApiKey}>
-            GPT-4 (Pro+ Only)
-          </SelectItem>
-          <SelectItem value="claude" disabled={!canUseCustomApiKey}>
-            Claude 3 (Pro+ Only)
-          </SelectItem>
-        </SelectContent>
-      </Select>
-      
+      <RadioGroup
+        value={value}
+        onValueChange={onChange}
+        className="grid grid-cols-1 md:grid-cols-2 gap-2"
+      >
+        {models.map((model) => (
+          <div
+            key={model.id}
+            className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer transition-colors ${
+              value === model.id ? "bg-primary/5 border-primary" : "hover:bg-gray-50"
+            }`}
+            onClick={() => onChange(model.id)}
+          >
+            <RadioGroupItem value={model.id} id={model.id} />
+            <div className="space-y-0.5">
+              <Label htmlFor={model.id} className="cursor-pointer">
+                {model.label}
+              </Label>
+              <p className="text-xs text-gray-500">{model.description}</p>
+            </div>
+          </div>
+        ))}
+      </RadioGroup>
+
       {canUseCustomApiKey && (
-        <div className="space-y-2">
-          <div className="flex items-center">
-            <Label htmlFor="apiKey" className="mr-2">OpenAI API Key</Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="h-4 w-4 text-gray-500" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs p-3">
-                  <p>Enter your own OpenAI API key to use your account for content generation. Your API key is stored securely and never shared.</p>
-                  <p className="mt-2 text-xs">You can find your API key in your OpenAI account dashboard.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          <div className="relative">
-            <Input
-              id="apiKey"
-              type="password"
-              placeholder={savedApiKey ? "API key loaded from settings" : "sk-..."}
-              value={apiKey}
-              onChange={(e) => handleApiKeyChange(e.target.value)}
-              className={`${
-                apiKeyStatus === "valid" ? "border-green-500 pr-10" : 
-                apiKeyStatus === "invalid" ? "border-red-500 pr-10" : ""
-              }`}
-            />
-            {apiKeyStatus === "valid" && (
-              <Check className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-green-500" />
-            )}
-            {apiKeyStatus === "invalid" && (
-              <AlertTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-red-500" />
-            )}
-          </div>
-          
+        <div className="space-y-2 mt-4 border-t pt-4">
+          <Label htmlFor="openai-api-key">OpenAI API Key</Label>
+          <Input
+            id="openai-api-key"
+            type="password"
+            placeholder="sk-..."
+            value={apiKey}
+            onChange={(e) => onApiKeyChange(e.target.value)}
+          />
           <p className="text-xs text-gray-500">
-            Your API key is stored securely and used only for your content generation requests.
-            {savedApiKey && " Your saved API key has been loaded from settings."}
+            Enter your API key to use your own OpenAI account. Your key is stored locally
+            and never sent to our servers.
           </p>
         </div>
       )}

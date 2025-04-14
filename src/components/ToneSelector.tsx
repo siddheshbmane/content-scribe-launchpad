@@ -1,16 +1,7 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
-import { LucideIcon, MessagesSquare, Briefcase, GraduationCap } from "lucide-react";
-
-type ToneOption = {
-  value: string;
-  label: string;
-  description: string;
-  icon: LucideIcon;
-};
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ToneSelectorProps {
   value: string;
@@ -18,55 +9,43 @@ interface ToneSelectorProps {
 }
 
 const ToneSelector: React.FC<ToneSelectorProps> = ({ value, onChange }) => {
-  const tones: ToneOption[] = [
-    {
-      value: "professional",
-      label: "Professional",
-      description: "Polished and industry-focused",
-      icon: Briefcase,
-    },
-    {
-      value: "friendly",
-      label: "Friendly",
-      description: "Conversational and approachable",
-      icon: MessagesSquare,
-    },
-    {
-      value: "educational",
-      label: "Educational",
-      description: "Informative and instructional",
-      icon: GraduationCap,
-    },
+  const tones = [
+    { id: "professional", label: "Professional", description: "Formal and business-oriented" },
+    { id: "casual", label: "Casual", description: "Relaxed and conversational" },
+    { id: "enthusiastic", label: "Enthusiastic", description: "Upbeat and energetic" },
+    { id: "informative", label: "Informative", description: "Educational and detailed" },
+    { id: "inspirational", label: "Inspirational", description: "Motivational and uplifting" },
+    { id: "authoritative", label: "Authoritative", description: "Expert and commanding" },
+    { id: "storytelling", label: "Storytelling", description: "Narrative and engaging" },
+    { id: "humorous", label: "Humorous", description: "Light-hearted and funny" }
   ];
 
   return (
     <div className="space-y-2">
       <Label>Content Tone</Label>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <RadioGroup
+        value={value}
+        onValueChange={onChange}
+        className="grid grid-cols-1 md:grid-cols-2 gap-2"
+      >
         {tones.map((tone) => (
-          <Button
-            key={tone.value}
-            type="button"
-            variant="outline"
-            className={cn(
-              "h-auto flex-col py-4 px-3 justify-start items-start text-left",
-              value === tone.value && "border-linkedin-primary bg-linkedin-light"
-            )}
-            onClick={() => onChange(tone.value)}
+          <div
+            key={tone.id}
+            className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer transition-colors ${
+              value === tone.id ? "bg-primary/5 border-primary" : "hover:bg-gray-50"
+            }`}
+            onClick={() => onChange(tone.id)}
           >
-            <div className="flex items-center w-full">
-              <div className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full",
-                value === tone.value ? "bg-linkedin-primary text-white" : "bg-gray-100 text-gray-500"
-              )}>
-                <tone.icon className="h-4 w-4" />
-              </div>
-              <span className="ml-2 font-medium">{tone.label}</span>
+            <RadioGroupItem value={tone.id} id={tone.id} />
+            <div className="space-y-0.5">
+              <Label htmlFor={tone.id} className="cursor-pointer">
+                {tone.label}
+              </Label>
+              <p className="text-xs text-gray-500">{tone.description}</p>
             </div>
-            <p className="mt-2 text-xs text-gray-500">{tone.description}</p>
-          </Button>
+          </div>
         ))}
-      </div>
+      </RadioGroup>
     </div>
   );
 };

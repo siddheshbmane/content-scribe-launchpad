@@ -1,76 +1,71 @@
 
-import { faker } from '@faker-js/faker';
+import { faker } from "@faker-js/faker";
 
-// Define the Testimonial type
 export interface Testimonial {
   id: string;
   name: string;
-  jobTitle: string;
+  position: string;
   company: string;
-  testimonial: string;
+  content: string;
+  rating: number;
   avatarUrl: string;
-  rating: number; // 1-5
-  date: string;
 }
 
-// Create an array of 100+ testimonials with real-sounding content
-export const generateTestimonials = (count: number = 100): Testimonial[] => {
-  const testimonials: Testimonial[] = [];
+// Function to generate a realistic testimonial
+function generateTestimonial(): Testimonial {
+  const firstName = faker.person.firstName();
+  const lastName = faker.person.lastName();
   
-  const testimonialTemplates = [
-    "ContentScribe has transformed my LinkedIn presence. I've gained {{number}} new connections and seen engagement increase by {{percent}}% since I started using it. The AI-generated content is surprisingly personalized and feels authentic.",
-    "As a busy {{jobTitle}}, I never had time to maintain a consistent LinkedIn presence. ContentScribe changed that completely. Now I schedule a month's worth of posts in under an hour. Game changer!",
-    "The AI suggestions are spot-on for my industry. I was skeptical at first, but ContentScribe truly understands the {{industry}} space and helps me create content that resonates with my network.",
-    "My team at {{company}} has been using ContentScribe for {{number}} months now, and we've seen a significant boost in our brand visibility on LinkedIn. The scheduling feature saves us hours every week.",
-    "I've tried several content tools before, but none matched the quality and ease of ContentScribe. The combination of AI-generated content and simple scheduling is perfect for professionals who want to grow their personal brand.",
-    "ContentScribe helped me position myself as a thought leader in my industry. The quality of the AI-generated content is impressive - my network often comments on how insightful my posts have become!",
-    "Since using ContentScribe, I've received {{number}} job inquiries and speaking opportunities through LinkedIn. The platform helped me showcase my expertise in a way I couldn't before.",
-    "The calendar feature is intuitive and the content suggestions are always relevant to trends in my industry. ContentScribe feels like having a personal marketing assistant focused on my LinkedIn growth.",
-    "I was struggling to maintain consistency on LinkedIn until I found ContentScribe. Now I'm posting regularly and seeing real engagement. My profile views have increased by {{percent}}% in just two months.",
-    "ContentScribe makes creating carousel posts so simple. The templates are professional, and the AI helps generate content that truly engages my audience. Worth every penny of my subscription.",
-    "As someone who isn't naturally a content creator, ContentScribe has been invaluable. It helps me articulate my professional insights in a way that connects with my LinkedIn network.",
-    "The ROI on ContentScribe has been incredible. For just $29/month, I've generated leads worth thousands of dollars through my improved LinkedIn presence. Couldn't recommend it more highly.",
-    "I appreciate how ContentScribe helps me maintain my authentic voice while suggesting relevant content. It doesn't feel robotic - the AI truly understands my industry and tone.",
-    "ContentScribe solved my biggest professional challenge: staying visible on LinkedIn despite my busy schedule. Now I'm consistently showing up in my connections' feeds with valuable content.",
-    "I've received compliments from industry leaders on my LinkedIn content since using ContentScribe. The quality and consistency have helped me build credibility in my field."
+  const positions = [
+    "Marketing Director", "Content Manager", "Brand Strategist", "Social Media Specialist",
+    "Communications Manager", "Digital Marketing Lead", "VP of Marketing", "Marketing Consultant",
+    "LinkedIn Growth Specialist", "Content Creator", "Head of Content", "Influencer Marketing Lead",
+    "Personal Branding Coach", "Growth Marketing Manager", "SEO Specialist", "Sales Director",
+    "Chief Marketing Officer", "Entrepreneur", "Startup Founder", "Business Development Manager"
   ];
   
-  for (let i = 0; i < count; i++) {
-    const template = faker.helpers.arrayElement(testimonialTemplates);
-    const name = faker.person.fullName();
-    const jobTitle = faker.person.jobTitle();
-    const company = faker.company.name();
-    const industry = faker.company.buzzNoun();
-    const number = faker.number.int({ min: 3, max: 50 });
-    const percent = faker.number.int({ min: 30, max: 300 });
-    
-    // Replace placeholders in the template
-    let processedTestimonial = template
-      .replace('{{jobTitle}}', jobTitle)
-      .replace('{{company}}', company)
-      .replace('{{industry}}', industry)
-      .replace('{{number}}', number.toString())
-      .replace('{{percent}}', percent.toString());
-    
-    testimonials.push({
-      id: faker.string.uuid(),
-      name,
-      jobTitle,
-      company,
-      testimonial: processedTestimonial,
-      avatarUrl: faker.image.avatar(),
-      rating: faker.helpers.arrayElement([4, 5, 5, 5]), // Most reviews are positive
-      date: faker.date.past({ years: 1 }).toISOString()
-    });
-  }
+  const companies = [
+    "TechGrowth", "InnovateCorp", "Digital Dynamics", "FutureBrands", "MarketWave",
+    "Nexus Technologies", "Elevate Media", "PinnacleGroup", "StrategyLabs", "VisionaryTech",
+    "GrowthForge", "ContentPeak", "LinkedIn Masters", "SocialSurge", "BrandBuilders",
+    "PrecisionMarketing", "GlobalReach", "InsightfulMedia", "SmartContent", "LeadGenPros"
+  ];
   
-  return testimonials;
-};
+  // LinkedIn-specific positive testimonials with mentions of AI content generation
+  const testimonialContents = [
+    `ContentScribe has completely transformed how I approach LinkedIn. The AI-generated content is so natural and engaging that my engagement rates have increased by over 45% in just one month.`,
+    
+    `As a busy ${positions[Math.floor(Math.random() * positions.length)]}, I never had time to maintain a consistent LinkedIn presence. With ContentScribe, I now post 3 times a week with minimal effort, and my network is growing faster than ever.`,
+    
+    `The AI content generator understands my industry so well, it's like having a personal ghostwriter who's an expert in my field. This tool has been a game-changer for my personal brand.`,
+    
+    `I was skeptical about AI-generated content at first, but ContentScribe has made me a believer. The quality of posts it creates is exceptional, and I've received countless compliments on my "writing style."`,
+    
+    `ContentScribe doesn't just save me time - it makes me look better on LinkedIn. The content is more engaging and professional than what I was creating myself. Worth every penny!`,
+    
+    `My LinkedIn profile was practically dormant before I found ContentScribe. Now I'm posting consistently, engaging with my network, and have even landed two major speaking opportunities thanks to my increased visibility.`,
+    
+    `What impresses me most about ContentScribe is how it captures my voice. It doesn't feel like generic AI content - it feels like ME, just more eloquent and consistent.`,
+    
+    `As someone who struggles with writer's block, ContentScribe has been a lifesaver. It gives me perfect starting points that I can tweak, and the calendar feature ensures I never miss posting days.`,
+    
+    `I've tried other LinkedIn content tools, but nothing comes close to ContentScribe. The AI understands professional content better than any other solution I've used.`,
+    
+    `Our entire marketing team uses ContentScribe now, and it's brought consistency to our brand voice across all our employees' LinkedIn accounts. An essential tool for modern businesses.`
+  ];
+  
+  return {
+    id: faker.string.uuid(),
+    name: `${firstName} ${lastName}`,
+    position: positions[Math.floor(Math.random() * positions.length)],
+    company: companies[Math.floor(Math.random() * companies.length)],
+    content: testimonialContents[Math.floor(Math.random() * testimonialContents.length)],
+    rating: 5, // All 5-star ratings as requested
+    avatarUrl: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+  };
+}
 
-// Generate and export 100 testimonials
-export const testimonials: Testimonial[] = generateTestimonials(120);
+// Generate 100+ testimonials
+const testimonials: Testimonial[] = Array.from({ length: 120 }, () => generateTestimonial());
 
-// Function to get a specific number of testimonials
-export const getTestimonials = (count: number = 3): Testimonial[] => {
-  return faker.helpers.arrayElements(testimonials, count);
-};
+export default testimonials;
