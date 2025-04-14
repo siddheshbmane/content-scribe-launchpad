@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -138,7 +137,7 @@ const Settings = () => {
     
     toast({
       title: "Notification Preferences Updated",
-      description: `Your ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} preference has been updated.`,
+      description: `Your ${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').toLowerCase()} preference has been updated.`,
     });
   };
 
