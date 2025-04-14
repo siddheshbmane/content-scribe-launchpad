@@ -11,6 +11,7 @@ export interface User {
   role: "user" | "admin";
   jobTitle?: string;
   industry?: string;
+  plan?: "free" | "pro" | "business"; // Add plan field
 }
 
 // Define the context type
@@ -23,6 +24,7 @@ interface AuthContextType {
   logout: () => void;
   isAdmin: boolean;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>; // Add forgot password function
 }
 
 // Create the context
@@ -38,7 +40,8 @@ const MOCK_USERS = [
     profileImage: "https://i.pravatar.cc/150?img=1",
     role: "user" as const,
     jobTitle: "Marketing Specialist",
-    industry: "Technology"
+    industry: "Technology",
+    plan: "free" as const
   },
   {
     id: "2",
@@ -48,7 +51,8 @@ const MOCK_USERS = [
     profileImage: "https://i.pravatar.cc/150?img=2",
     role: "admin" as const,
     jobTitle: "Marketing Director",
-    industry: "Software"
+    industry: "Software",
+    plan: "business" as const
   }
 ];
 
@@ -137,14 +141,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         role: "user" as const,
         jobTitle: "",
-        industry: ""
+        industry: "",
+        plan: "free" as const // Default plan is free
       };
       
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
-      toast.success("Account created successfully!");
+      
+      // Simulate email verification
+      toast.success("Account created! A verification email has been sent.");
+      
+      // For demo purposes, we'll consider the user verified immediately
+      setTimeout(() => {
+        toast.success("Email verified successfully!");
+      }, 2000);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const forgotPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Check if user exists
+      const userExists = MOCK_USERS.some(u => u.email === email);
+      
+      if (!userExists) {
+        // We don't want to reveal if the email exists for security reasons
+        // So we show a success message either way
+      }
+      
+      // In a real app, this would send a password reset email
+      toast.success("If an account exists for this email, a password reset link has been sent.");
+      return;
+    } catch (error) {
+      toast.error("Failed to process request. Please try again.");
       throw error;
     } finally {
       setIsLoading(false);
@@ -178,6 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("user_preferences");
     toast.info("Logged out successfully");
   };
 
@@ -193,7 +231,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         isAdmin,
-        updateUserProfile
+        updateUserProfile,
+        forgotPassword
       }}
     >
       {children}

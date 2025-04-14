@@ -28,7 +28,7 @@ const Login = () => {
   const [isResetting, setIsResetting] = useState(false);
   
   const { toast } = useToast();
-  const { login, loginWithLinkedIn, user } = useAuth();
+  const { login, loginWithLinkedIn, user, forgotPassword } = useAuth();
   const navigate = useNavigate();
 
   // If user is already logged in, redirect to dashboard
@@ -104,21 +104,10 @@ const Login = () => {
     setIsResetting(true);
     
     try {
-      // In a real app, call API to send password reset email
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Password reset email sent",
-        description: "Check your inbox for instructions to reset your password",
-      });
-      
+      await forgotPassword(resetEmail);
       setShowResetPassword(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send password reset email. Please try again.",
-        variant: "destructive",
-      });
+      // Error is already handled in the auth context
     } finally {
       setIsResetting(false);
     }

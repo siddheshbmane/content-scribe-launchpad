@@ -168,7 +168,7 @@ const Register = () => {
             
             <Button 
               type="submit" 
-              className="w-full h-11"
+              className="w-full h-11 mt-4"
               disabled={isRegistering}
             >
               {isRegistering ? "Creating account..." : "Create Account"}

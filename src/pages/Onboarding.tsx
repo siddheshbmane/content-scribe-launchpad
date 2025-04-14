@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import OnboardingWizard from "@/components/OnboardingWizard";
@@ -7,16 +7,27 @@ import OnboardingWizard from "@/components/OnboardingWizard";
 const Onboarding = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     // If user is not logged in, redirect to login
     if (!isLoading && !user) {
       navigate("/login");
+      return;
+    }
+
+    // If user has already completed onboarding, redirect to dashboard
+    if (!isLoading && user) {
+      const hasCompletedOnboarding = localStorage.getItem("user_preferences");
+      if (hasCompletedOnboarding) {
+        navigate("/dashboard");
+      }
+      setIsChecking(false);
     }
   }, [user, isLoading, navigate]);
 
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (isLoading || isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

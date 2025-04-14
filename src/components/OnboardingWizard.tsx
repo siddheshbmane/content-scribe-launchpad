@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,13 +57,15 @@ const OnboardingWizard = () => {
         setLoading(true);
         await updateUserProfile({ jobTitle, industry });
         setLoading(false);
+        // Proceed to next step after successful update
+        setStep(step + 1);
       } catch (error) {
         setLoading(false);
+        toast.error("Failed to update profile information");
         return;
       }
-    }
-    
-    if (step < 4) {
+    } else if (step < 4) {
+      // For steps 2 and 3, just proceed to the next step
       setStep(step + 1);
     } else {
       // Final step submission
